@@ -2,7 +2,7 @@ import {
   defaultCodexConfigOptions,
   normalizeCodexConfigOptions,
 } from "./codexConfig.ts";
-import { withCodexTemplates } from "./configPreviews.ts";
+import { buildGatewayModels, withCodexTemplates } from "./configPreviews.ts";
 import {
   defaultGatewayConfigOptions,
   sanitizeConfigOptionsForPreset,
@@ -20,6 +20,7 @@ import {
   presetForProfile,
 } from "./profilePresetUtils.ts";
 import {
+  claudeDesktopOfficialModels,
   claudeOfficialModelMap,
   vendorPresetApiFormatForTarget,
   vendorPresetAuthFieldForTarget,
@@ -114,8 +115,13 @@ export function normalizeGatewayProfileForApply(
     if (target === "claude_desktop") {
       next.model_map = claudeOfficialModelMap;
       next.provider_model_map = cloneModelMap(profile.provider_model_map ?? preset.model_map);
+      next.models = buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels);
       next.upstream_model = next.provider_model_map.main || next.upstream_model;
     }
+  }
+  if (target === "claude_desktop" && (!preset || preset.id.includes("anthropic"))) {
+    next.model_map = claudeOfficialModelMap;
+    next.models = buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels);
   }
   return next;
 }

@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.9 - 2026-06-14
+
+Switch++ 小版本更新。本次聚焦 Claude Desktop 模型菜单修复，解决配置已改为 Fable5 但 `/model` 弹窗仍显示旧 Claude Opus/Sonnet/Haiku 模型的问题。
+
+### 功能亮点 / Highlights
+
+- Claude Desktop 写入的 `inferenceModels` 现在统一使用 `Fable5`，让 `/model` 菜单和 Switch++ 配置保持一致。 / Claude Desktop `inferenceModels` now use `Fable5`, keeping the `/model` picker aligned with Switch++ configuration.
+- 已保存的 Claude Desktop profile 会在加载和应用时迁移到 Fable5 可见模型，同时保留 DeepSeek、MiniMax、阿里百炼等供应商真实上游模型映射。 / Existing Claude Desktop profiles migrate to the Fable5 visible model on load/apply while preserving real provider model mappings for DeepSeek, MiniMax, Bailian, and similar upstreams.
+- Anthropic/Claude Desktop preset、配置预览、保存路径和私有 core 写入逻辑改为共享同一组模型常量，避免只改 UI 默认值而真实配置仍回退旧模型。 / Anthropic/Claude Desktop presets, previews, save paths, and private-core writes now share one model source, preventing UI defaults from drifting away from real written config.
+- 补充 Claude Desktop 预览与私有 core 迁移测试，锁定 Fable5 菜单和 provider 模型映射不互相覆盖。 / Added preview and private-core migration coverage so the Fable5 menu and provider model mappings do not overwrite each other.
+
+### 界面预览 / Screenshots
+
+**Claude Desktop 模型菜单 / Claude Desktop Model Picker**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.8 - 2026-06-14
 
 Switch++ 小版本更新。本次聚焦授权边界和源码开放边界，避免授权状态异常或公开源码本地构建造成错误放行。

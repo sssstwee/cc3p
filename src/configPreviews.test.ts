@@ -423,6 +423,10 @@ const officialPackageDesktopPreview = buildClaudeDesktopProfileConfigPreview({
 includes(officialPackageDesktopPreview, '"agentSwitchClient": "Claude Desktop"');
 includes(officialPackageDesktopPreview, '"agentSwitchRoute": "official"');
 includes(officialPackageDesktopPreview, '"agentSwitchOfficialAuth": "claude.ai"');
+includes(officialPackageDesktopPreview, '"name": "Fable5"');
+if (officialPackageDesktopPreview.includes("claude-opus-4-7")) {
+  throw new Error("Claude Desktop official package preview must use Fable5 as the visible model option");
+}
 if (/inferenceGateway(BaseUrl|ApiKey|AuthField|ApiFormat)/.test(officialPackageDesktopPreview)) {
   throw new Error("Claude Desktop official package preview must stay isolated from gateway/API fields");
 }

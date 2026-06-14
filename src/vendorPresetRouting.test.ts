@@ -401,6 +401,13 @@ equal(claudeDesktopPresetIds.includes("anthropic"), true);
 equal(claudeDesktopPresetIds.includes("anthropic-package"), true);
 equal(claudeDesktopPresetIds.includes("openai-package"), false);
 
+const anthropicPackage = requiredPreset("anthropic-package");
+equal(anthropicPackage.model_map.main, "Fable5");
+equal(anthropicPackage.model_map.opus, "Fable5");
+equal(anthropicPackage.model_map.sonnet, "Fable5");
+equal(anthropicPackage.model_map.haiku, "Fable5");
+equal(anthropicPackage.models.includes("Fable5"), true);
+
 function codexCompatModeForPresetForTest(preset: VendorPreset): CodexCompatMode {
   if (preset.codex_compat_mode) return preset.codex_compat_mode;
   return preset.codex_support_status === "responses" ? "direct" : "proxy";

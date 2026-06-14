@@ -105,6 +105,7 @@ import {
 } from "./gatewayConfigOptions.ts";
 import {
   allVendorPresets,
+  claudeDesktopOfficialModels,
   claudeOfficialModelMap,
   customPreset,
   vendorPresetApiFormatForTarget,
@@ -1939,7 +1940,7 @@ function App() {
         : buildGatewayModels(
             resolvedDesktopModelMap,
             target === "claude_desktop"
-              ? ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"]
+              ? claudeDesktopOfficialModels
               : selectedPreset
                 ? (allVendorPresets.find((p) => p.id === selectedPreset)?.models ?? [])
                 : ["claude-opus-4-7", "claude-sonnet-4-6"],

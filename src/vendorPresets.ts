@@ -28,11 +28,13 @@ export const vendorIconPaths: Record<string, string> = {
 };
 
 export const claudeOfficialModelMap: ModelMap = {
-  main: "claude-opus-4-7",
-  haiku: "claude-haiku-4-5",
-  sonnet: "claude-sonnet-4-6",
-  opus: "claude-opus-4-7",
+  main: "Fable5",
+  haiku: "Fable5",
+  sonnet: "Fable5",
+  opus: "Fable5",
 };
+
+export const claudeDesktopOfficialModels = ["Fable5"];
 
 export const openaiPackageModels = ["gpt-5.5", "gpt-5.4-mini", "gpt-5.4", "gpt-5.3-codex", "gpt-5.2"];
 
@@ -102,7 +104,7 @@ const anthropicPackagePreset: VendorPreset = {
   use_full_url: false,
   note: "Claude Code 使用本地官方登录态，不需要手填 API Key",
   model_map: claudeOfficialModelMap,
-  models: ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"],
+  models: claudeDesktopOfficialModels,
   group: "international",
   supported_targets: ["claude_cli", "claude_desktop"],
 };
@@ -111,7 +113,7 @@ const internationalPresets: VendorPreset[] = [
   openaiPackagePreset,
   { id: "openai", name: "OpenAI API", description: "OpenAI API Key", website_url: "https://platform.openai.com", base_url: "https://api.openai.com/v1", request_url: "https://api.openai.com/v1", api_key_hint: "sk-proj-...", api_key_url: "https://platform.openai.com/api-keys", api_format: "openai_responses", auth_field: "OPENAI_API_KEY", use_full_url: false, note: "使用 OpenAI API Key 直接调用 Responses API", model_map: defaultModelMap("gpt-5.5"), models: ["gpt-5.5", "gpt-5.4", "gpt-4.1"], group: "international", supported_targets: ["codex"], codex_compat_mode: "direct", codex_support_status: "responses", codex_support_note: "OpenAI 官方 Codex 配置参考确认自定义 provider 当前只支持 Responses 协议。", codex_support_url: "https://developers.openai.com/codex/config-reference/", claude_desktop_supported: false, claude_desktop_support_note: "OpenAI API 可通过 Codex 调用。" },
   anthropicPackagePreset,
-  { id: "anthropic", name: "Anthropic API", description: "Anthropic API Key", website_url: "https://console.anthropic.com", base_url: "https://api.anthropic.com", request_url: "https://api.anthropic.com", api_key_hint: "sk-ant-...", api_key_url: "https://console.anthropic.com/settings/keys", api_format: "anthropic", auth_field: "ANTHROPIC_AUTH_TOKEN", use_full_url: false, note: "使用 Anthropic API Key 直接调用 Messages API", model_map: claudeOfficialModelMap, models: ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"], group: "international", supported_targets: ["codex"], codex_support_status: "unconfirmed", codex_support_note: "Anthropic 原生 Messages API 不是 Codex 新版要求的 OpenAI Responses API。", codex_support_url: "https://platform.claude.com/docs/en/api/overview", claude_desktop_supported: true, claude_desktop_support_note: "Anthropic 原生模型可直接用于 Claude 桌面端。" },
+  { id: "anthropic", name: "Anthropic API", description: "Anthropic API Key", website_url: "https://console.anthropic.com", base_url: "https://api.anthropic.com", request_url: "https://api.anthropic.com", api_key_hint: "sk-ant-...", api_key_url: "https://console.anthropic.com/settings/keys", api_format: "anthropic", auth_field: "ANTHROPIC_AUTH_TOKEN", use_full_url: false, note: "使用 Anthropic API Key 直接调用 Messages API", model_map: claudeOfficialModelMap, models: claudeDesktopOfficialModels, group: "international", supported_targets: ["codex"], codex_support_status: "unconfirmed", codex_support_note: "Anthropic 原生 Messages API 不是 Codex 新版要求的 OpenAI Responses API。", codex_support_url: "https://platform.claude.com/docs/en/api/overview", claude_desktop_supported: true, claude_desktop_support_note: "Anthropic 原生模型可直接用于 Claude 桌面端。" },
   { id: "google", name: "Google AI", description: "Gemini API · OpenAI 兼容", website_url: "https://aistudio.google.com", base_url: "https://generativelanguage.googleapis.com/v1beta/openai", request_url: "https://generativelanguage.googleapis.com/v1beta/openai", api_key_hint: "AIza...", api_key_url: "https://aistudio.google.com/apikey", api_format: "openai_chat", auth_field: "OPENAI_API_KEY", use_full_url: false, note: "Google 官方 Gemini API 提供 OpenAI compatibility endpoint", model_map: defaultModelMap("gemini-2.5-pro"), models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"], group: "international", supported_targets: ["codex"], codex_support_status: "gateway", codex_support_note: "Google Gemini API 官方提供 Chat Completions 兼容端点；Codex 通过 Switch++ 本地网关适配后可用。", codex_support_url: "https://ai.google.dev/gemini-api/docs/openai", claude_desktop_supported: false, claude_desktop_support_note: "未找到 Google AI 面向 Claude 桌面端模型映射的适配说明；Claude 类目标需经 Switch++ 本地网关连接 Gemini 上游。" },
   { id: "minimax-global", name: "MiniMax (国际)", description: "MiniMax · 国际站", website_url: "https://platform.minimax.io", base_url: "https://api.minimax.io/v1", request_url: "https://api.minimax.io/anthropic", api_key_hint: "mm-...", api_key_url: "https://platform.minimax.io/user-center/basic-information/interface-key", api_format: "anthropic", auth_field: "ANTHROPIC_API_KEY", use_full_url: false, note: "International Claude Code endpoint", model_map: defaultModelMap("MiniMax-M2.7"), models: ["MiniMax-M2.7", "MiniMax-M2.5"], group: "international", supported_targets: ["codex"], codex_support_status: "gateway", codex_support_note: "MiniMax 官方 Codex CLI 配置当前是 Chat 协议路径；新版 Codex 通过 Switch++ 本地网关适配为 Chat Completions 后可用。", codex_support_url: "https://platform.minimax.io/docs/token-plan/other-tools", claude_desktop_supported: true, claude_desktop_support_note: "MiniMax 提供了 Claude 兼容模型映射能力。" },
   { id: "zai-global", name: "Z.ai (智谱国际)", description: "智谱 AI · 国际站", website_url: "https://z.ai", base_url: "https://api.z.ai/api/paas/v4", request_url: "https://api.z.ai/api/anthropic", api_key_hint: "zai-...", api_key_url: "https://chat.z.ai/apikeys", api_format: "anthropic", auth_field: "ANTHROPIC_AUTH_TOKEN", use_full_url: false, note: "Z.ai Claude Code / Goose endpoint", model_map: { main: "glm-4.7", haiku: "glm-4.5-air", sonnet: "glm-4.7", opus: "glm-4.7" }, models: ["glm-5.1", "glm-5-turbo", "glm-4.7", "glm-4.5-air"], group: "international", supported_targets: ["codex"], codex_support_status: "gateway", codex_support_note: "Z.ai 官方 Coding Plan 文档提供 Chat Completions 端点；Codex 通过 Switch++ 本地网关适配后可用。", codex_support_url: "https://docs.z.ai/devpack/tool/others", claude_desktop_supported: true, claude_desktop_support_note: "Z.ai 提供了 Claude 兼容模型映射能力。" },

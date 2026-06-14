@@ -16,7 +16,7 @@ import {
 } from "./codexConfig.ts";
 import { sanitizeClaudeConfigOptionsForStableExperience } from "./gatewayConfigOptions.ts";
 import { isAsciiHeaderValue, modelSupports1mContext } from "./gatewayProfile.ts";
-import { claudeOfficialModelMap } from "./vendorPresets.ts";
+import { claudeDesktopOfficialModels, claudeOfficialModelMap } from "./vendorPresets.ts";
 
 // Re-export for backward compatibility — consumers should prefer appConstants.ts directly.
 export { CODEX_LOCAL_PROXY_BASE_URL } from "./appConstants.ts";
@@ -139,11 +139,7 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
       agentSwitchRoute: "official",
       agentSwitchOfficialAuth: "claude.ai",
       disableDeploymentModeChooser: true,
-      inferenceModels: buildGatewayModels(claudeOfficialModelMap, [
-        "claude-opus-4-7",
-        "claude-sonnet-4-6",
-        "claude-haiku-4-5",
-      ]).map((model) => ({
+      inferenceModels: buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels).map((model) => ({
         name: model.name,
         supports1m: model.supports_1m,
       })),
@@ -161,11 +157,7 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
     agentSwitchRoute: usesLocalGateway ? "local_gateway" : "direct",
     agentSwitchUpstreamBaseUrl: form.base_url,
     disableDeploymentModeChooser: true,
-    inferenceModels: buildGatewayModels(claudeOfficialModelMap, [
-      "claude-opus-4-7",
-      "claude-sonnet-4-6",
-      "claude-haiku-4-5",
-    ]).map((model) => ({
+    inferenceModels: buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels).map((model) => ({
       name: model.name,
       supports1m: model.supports_1m,
     })),
