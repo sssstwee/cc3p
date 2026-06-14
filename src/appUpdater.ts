@@ -131,5 +131,6 @@ export async function installOfficialAppUpdate(
     progress: 100,
     message: "更新已安装，正在重启",
   });
+  await new Promise((resolve) => window.setTimeout(resolve, 1200));
   await relaunch();
 }

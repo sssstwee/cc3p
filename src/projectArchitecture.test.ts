@@ -150,6 +150,7 @@ test("official distribution uses Tauri signed updater for in-app installs", () =
   const releaseWorkflow = readSource("../.github/workflows/release.yml");
   const appShellChrome = readSource("./features/app-shell/useAppShellChrome.ts");
   const appSidebar = readSource("./features/app-shell/AppSidebar.tsx");
+  const appUpdater = readSource("./appUpdater.ts");
   const updaterModuleUrl = new URL("./appUpdater.ts", import.meta.url);
 
   assert.match(packageJson.dependencies["@tauri-apps/plugin-updater"], /^\^2/);
@@ -167,6 +168,9 @@ test("official distribution uses Tauri signed updater for in-app installs", () =
   assert.equal(existsSync(updaterModuleUrl), true);
   assert.equal(appShellChrome.includes("checkOfficialAppUpdate"), true);
   assert.equal(appShellChrome.includes("installOfficialAppUpdate"), true);
+  assert.equal(appUpdater.includes("update.downloadAndInstall"), true);
+  assert.equal(appUpdater.includes("window.setTimeout(resolve, 1200)"), true);
+  assert.equal(appUpdater.includes("await relaunch();"), true);
   assert.equal(appShellChrome.includes("openUrl(url)"), false);
   assert.equal(appSidebar.includes("appUpdateInstallState"), true);
   assert.equal(appSidebar.includes('className="ccr-sidebar-update-label"'), true);
