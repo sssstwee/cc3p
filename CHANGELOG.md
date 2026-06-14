@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.10 - 2026-06-15
+
+Switch++ 小版本更新。本次聚焦自动更新清单修复，解决 macOS 端看到更新按钮后点击却提示“自动更新清单暂不可用”的问题。
+
+### 功能亮点 / Highlights
+
+- 修复发布流水线只构建 `dmg` 导致 macOS 没有 updater 可安装 artifact 的问题；macOS release 现在同时构建 `app` 与 `dmg`。 / Fixed the release pipeline issue where macOS only built `dmg` bundles and produced no updater-installable artifact; macOS releases now build both `app` and `dmg`.
+- 修复多平台矩阵 job 互相覆盖 `latest.json` 的问题；所有平台会先上传各自 updater manifest，再由最终 job 合并成一个包含 macOS、Windows、Linux 的清单。 / Fixed matrix jobs overwriting `latest.json`; each platform now uploads its own updater manifest and a final job merges macOS, Windows, and Linux entries.
+- 自动更新清单发布前会校验 `darwin-aarch64`、`darwin-x86_64`、`linux-x86_64`、`windows-x86_64` 平台键，避免再次发布缺平台的清单。 / The updater manifest now validates `darwin-aarch64`, `darwin-x86_64`, `linux-x86_64`, and `windows-x86_64` before upload to prevent incomplete manifests.
+- 补充发布架构测试，锁定 macOS updater bundle 与最终 manifest merge 步骤。 / Added release architecture coverage for macOS updater bundles and final manifest merging.
+
+### 界面预览 / Screenshots
+
+**自动更新 / Auto Update**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.9 - 2026-06-14
 
 Switch++ 小版本更新。本次聚焦 Claude Desktop 模型菜单修复，解决配置已改为 Fable5 但 `/model` 弹窗仍显示旧 Claude Opus/Sonnet/Haiku 模型的问题。

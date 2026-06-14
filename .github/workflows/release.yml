@@ -19,13 +19,17 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: "--target aarch64-apple-darwin --bundles dmg"
+            args: "--target aarch64-apple-darwin --bundles app,dmg"
+            updaterManifest: macos-aarch64-latest.json
           - platform: macos-latest
-            args: "--target x86_64-apple-darwin --bundles dmg"
+            args: "--target x86_64-apple-darwin --bundles app,dmg"
+            updaterManifest: macos-x86_64-latest.json
           - platform: windows-latest
             args: "--bundles nsis"
+            updaterManifest: windows-x86_64-latest.json
           - platform: ubuntu-22.04
             args: "--bundles appimage"
+            updaterManifest: linux-x86_64-latest.json
 
     runs-on: ${{ matrix.platform }}
 
@@ -124,3 +128,59 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+      - name: collect updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="$(find src-tauri/target -name latest.json -print -quit)"
+          if [[ -z "$manifest" ]]; then
+            echo "latest.json was not generated for ${{ matrix.args }}" >&2
+            exit 1
+          fi
+          mkdir -p updater-manifest
+          cp "$manifest" "updater-manifest/${{ matrix.updaterManifest }}"
+          jq '.platforms | keys' "updater-manifest/${{ matrix.updaterManifest }}"
+
+      - name: upload updater manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-manifest-${{ matrix.updaterManifest }}
+          path: updater-manifest/${{ matrix.updaterManifest }}
+          if-no-files-found: error
+
+  merge-updater-manifest:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: download updater manifests
+        uses: actions/download-artifact@v4
+        with:
+          path: updater-manifests
+          pattern: updater-manifest-*
+          merge-multiple: true
+
+      - name: merge and upload updater manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t manifests < <(find updater-manifests -name '*.json' | sort)
+          if [[ "${#manifests[@]}" -lt 4 ]]; then
+            echo "expected 4 updater manifests, found ${#manifests[@]}" >&2
+            printf '%s\n' "${manifests[@]}"
+            exit 1
+          fi
+          jq -s '.[0] as $base | reduce .[] as $item ($base; .platforms = (.platforms + $item.platforms))' \
+            "${manifests[@]}" > latest.json
+          jq -e '
+            (.platforms | has("darwin-aarch64")) and
+            (.platforms | has("darwin-x86_64")) and
+            (.platforms | has("linux-x86_64")) and
+            (.platforms | has("windows-x86_64"))
+          ' latest.json
+          gh release upload "${GITHUB_REF_NAME}" latest.json --clobber --repo "${GITHUB_REPOSITORY}"

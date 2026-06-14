@@ -181,6 +181,13 @@ test("official distribution uses Tauri signed updater for in-app installs", () =
     true,
   );
   assert.equal(releaseWorkflow.includes("includeUpdaterJson: true"), true);
+  assert.equal(releaseWorkflow.includes("--target aarch64-apple-darwin --bundles app,dmg"), true);
+  assert.equal(releaseWorkflow.includes("--target x86_64-apple-darwin --bundles app,dmg"), true);
+  assert.equal(releaseWorkflow.includes("actions/upload-artifact@v4"), true);
+  assert.equal(releaseWorkflow.includes("merge-updater-manifest:"), true);
+  assert.equal(releaseWorkflow.includes('has("darwin-aarch64")'), true);
+  assert.equal(releaseWorkflow.includes('has("darwin-x86_64")'), true);
+  assert.equal(releaseWorkflow.includes('gh release upload "${GITHUB_REF_NAME}" latest.json --clobber'), true);
 });
 
 test("Tauri build script reruns when app icons change", () => {
