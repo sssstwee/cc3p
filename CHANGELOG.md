@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.12 - 2026-06-15
+
+Switch++ 小版本更新。本次完成自动更新发布链路收口，修复多平台 release job 并发创建同一个 GitHub Release 时的竞争问题。
+
+### 功能亮点 / Highlights
+
+- 新增 `prepare-release` job，先创建或更新 GitHub Release，并把 `release_id` 传给所有平台构建。 / Added a `prepare-release` job that creates or updates the GitHub Release first and passes its `release_id` to every platform build.
+- 所有 `tauri-action` 矩阵 job 现在上传到同一个预创建 release，避免 `already_exists` 导致某个 macOS 架构发布失败。 / All `tauri-action` matrix jobs now upload to the same pre-created release, avoiding `already_exists` failures for one macOS architecture.
+- 保留从签名文件生成 updater manifest 的逻辑，最终清单仍合并 macOS、Windows、Linux 平台键后覆盖上传。 / Kept signature-file-based updater manifest generation, with the final manifest still merging macOS, Windows, and Linux platform keys before upload.
+- 清理失败的 `v1.0.10` / `v1.0.11` 半成品 release/tag，避免 `releases/latest` 指向不可安装清单。 / Cleaned up the failed `v1.0.10` / `v1.0.11` partial releases and tags so `releases/latest` does not point to a non-installable manifest.
+
+### 界面预览 / Screenshots
+
+**自动更新 / Auto Update**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.11 - 2026-06-15
 
 Switch++ 小版本更新。本次继续收口自动更新发布链路，修复 `v1.0.10` 首次发布时暴露的 workflow manifest 收集问题。

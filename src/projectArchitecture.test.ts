@@ -181,6 +181,9 @@ test("official distribution uses Tauri signed updater for in-app installs", () =
     true,
   );
   assert.equal(releaseWorkflow.includes("includeUpdaterJson: true"), true);
+  assert.equal(releaseWorkflow.includes("prepare-release:"), true);
+  assert.equal(releaseWorkflow.includes("release_id: ${{ steps.release.outputs.release_id }}"), true);
+  assert.equal(releaseWorkflow.includes("releaseId: ${{ needs.prepare-release.outputs.release_id }}"), true);
   assert.equal(releaseWorkflow.includes("--target aarch64-apple-darwin --bundles app,dmg"), true);
   assert.equal(releaseWorkflow.includes("--target x86_64-apple-darwin --bundles app,dmg"), true);
   assert.equal(releaseWorkflow.includes("shared-key: ${{ runner.os }}-${{ matrix.cacheKey }}"), true);

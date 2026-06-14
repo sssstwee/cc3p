@@ -11,7 +11,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prepare-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.release.outputs.release_id }}
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: create release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes_file="$(mktemp)"
+          awk -v tag="${GITHUB_REF_NAME}" '
+            $0 ~ "^## " tag " " { printing = 1; next }
+            printing && /^## v/ { exit }
+            printing { print }
+          ' CHANGELOG.md > "$notes_file"
+          if gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release edit "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Switch++ ${GITHUB_REF_NAME}" \
+              --notes-file "$notes_file" \
+              --draft=false \
+              --prerelease=false
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Switch++ ${GITHUB_REF_NAME}" \
+              --notes-file "$notes_file" \
+              --target "${GITHUB_SHA}" \
+              --verify-tag
+          fi
+          release_id="$(gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json databaseId --jq .databaseId)"
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: prepare-release
     permissions:
       contents: write
     strategy:
@@ -125,6 +167,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
+          releaseId: ${{ needs.prepare-release.outputs.release_id }}
           tagName: ${{ github.ref_name }}
           releaseName: "Switch++ ${{ github.ref_name }}"
           releaseBody: ${{ steps.release_notes.outputs.body }}
