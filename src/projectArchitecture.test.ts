@@ -77,6 +77,12 @@ test("public branding uses Switch++ naming", () => {
   assert.equal(readme.includes("https://github.com/sssstwee/switch-plus-plus/releases/latest"), true);
   assert.equal(readmeEn.includes("https://github.com/sssstwee/switch-plus-plus/releases/latest"), true);
   assert.equal(docs.includes("https://github.com/sssstwee/switch-plus-plus/releases/latest"), true);
+  assert.equal(docs.includes('id="latest-download-link"'), true);
+  assert.equal(docs.includes("https://api.github.com/repos/sssstwee/switch-plus-plus/releases/latest"), true);
+  assert.equal(docs.includes("/aarch64\\.dmg$/i"), true);
+  assert.equal(docs.includes("/x64\\.dmg$/i"), true);
+  assert.equal(docs.includes("/x64-setup\\.exe$/i"), true);
+  assert.equal(docs.includes("/amd64\\.AppImage$/i"), true);
   assert.equal(docs.includes("third-party config switcher"), true);
   assert.equal(readme.includes("Switch++"), true);
   assert.equal(readmeEn.includes("Switch++"), true);
