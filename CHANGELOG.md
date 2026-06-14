@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.0.13 - 2026-06-15
+
+Switch++ 小版本更新。本次修复自动更新安装并重启后，首次启动侧边栏菜单可能短时间无响应的问题。
+
+### 功能亮点 / Highlights
+
+- 自动更新完成后会稍作等待再 relaunch，降低 macOS 刚替换应用包后立即拉起时的窗口状态恢复问题。 / Auto-update now waits briefly before relaunching, reducing macOS window-state issues immediately after replacing the app bundle.
+- 授权状态读取会优先返回本机已有试用/授权判断，把联网刷新交给后台流程，避免启动时网络请求阻塞菜单切换。 / License status loading now returns the existing local trial/license decision first and leaves network refresh to the background flow, avoiding startup navigation stalls.
+- 授权读取失败仍保持 fail-closed；已过期或无有效试用的设备不会因为这个启动优化获得访问权限。 / License read failures remain fail-closed; expired or unverified devices do not gain access from this startup optimization.
+
+### 界面预览 / Screenshots
+
+**自动更新 / Auto Update**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.12 - 2026-06-15
 
 Switch++ 小版本更新。本次完成自动更新发布链路收口，修复多平台 release job 并发创建同一个 GitHub Release 时的竞争问题。
