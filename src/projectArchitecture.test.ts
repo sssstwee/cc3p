@@ -183,6 +183,10 @@ test("official distribution uses Tauri signed updater for in-app installs", () =
   assert.equal(releaseWorkflow.includes("includeUpdaterJson: true"), true);
   assert.equal(releaseWorkflow.includes("--target aarch64-apple-darwin --bundles app,dmg"), true);
   assert.equal(releaseWorkflow.includes("--target x86_64-apple-darwin --bundles app,dmg"), true);
+  assert.equal(releaseWorkflow.includes("shared-key: ${{ runner.os }}-${{ matrix.cacheKey }}"), true);
+  assert.equal(releaseWorkflow.includes("Switch++_aarch64.app.tar.gz"), true);
+  assert.equal(releaseWorkflow.includes("Switch++_x64.app.tar.gz"), true);
+  assert.equal(releaseWorkflow.includes("*.app.tar.gz.sig"), true);
   assert.equal(releaseWorkflow.includes("actions/upload-artifact@v4"), true);
   assert.equal(releaseWorkflow.includes("merge-updater-manifest:"), true);
   assert.equal(releaseWorkflow.includes('has("darwin-aarch64")'), true);

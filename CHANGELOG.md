@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.11 - 2026-06-15
+
+Switch++ 小版本更新。本次继续收口自动更新发布链路，修复 `v1.0.10` 首次发布时暴露的 workflow manifest 收集问题。
+
+### 功能亮点 / Highlights
+
+- 修复 release cache key 因 `app,dmg` 含逗号导致 macOS job post-cache 报错的问题。 / Fixed the release cache key issue where `app,dmg` introduced a comma that broke the macOS job post-cache step.
+- updater manifest 不再依赖 tauri-action 临时生成的 `latest.json` 路径；每个平台从自己的签名文件生成 manifest，再由最终 job 合并上传。 / Updater manifests no longer depend on tauri-action's temporary `latest.json` path; each platform generates its manifest from its own signature file before the final merge job uploads the combined manifest.
+- 保留 macOS `app,dmg` 构建，确保自动更新使用 `.app.tar.gz`，手动下载安装仍保留 DMG。 / Kept macOS `app,dmg` builds so auto-update uses `.app.tar.gz` while manual downloads still get DMG installers.
+- 最终合并后的清单继续校验 macOS、Windows、Linux 平台键，避免自动更新按钮再次指向不可安装状态。 / The final merged manifest still validates macOS, Windows, and Linux platform keys to prevent the update button from pointing to a non-installable state again.
+
+### 界面预览 / Screenshots
+
+**自动更新 / Auto Update**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.10 - 2026-06-15
 
 Switch++ 小版本更新。本次聚焦自动更新清单修复，解决 macOS 端看到更新按钮后点击却提示“自动更新清单暂不可用”的问题。
