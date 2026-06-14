@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 
+// @requires-private-core
+
 function equal<T>(actual: T, expected: T) {
   if (actual !== expected) {
     throw new Error(`Expected ${String(expected)}, got ${String(actual)}`);
@@ -615,7 +617,10 @@ equal(appConstantsContent.includes('APP_OFFICIAL_SITE_URL = "https://switchpp.pa
 equal(appTsx.includes("ccr-github-release-link"), false);
 equal(appTsx.includes('aria-label="打开 GitHub releases"'), false);
 equal(appTsx.includes("function guardLicensedNavigation"), true);
+equal(appTsx.includes("const licenseAccessAllowed = licenseControlsEnabled ? (licenseStatus?.access_allowed ?? false) : true;"), true);
 equal(appTsx.includes("if (licenseAccessAllowed) return true;"), true);
+equal(appTsx.includes("access_allowed: true,\n        license_state: \"trial\",\n        verification_status: \"offline\""), false);
+equal(appTsx.includes("access_allowed: false,\n        license_state: \"invalid\",\n        verification_status: \"offline\""), true);
 equal(appTsx.includes("setSettingsPopoverOpen(true);"), true);
 equal(appTsx.includes("Switch++ 可免费试用 7 天"), true);
 equal(appSidebar.includes("appVersion"), true);

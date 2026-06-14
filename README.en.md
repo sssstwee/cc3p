@@ -96,6 +96,14 @@ Open the release page and choose the installer for your system:
 
 The available assets are determined by the release page.
 
+## Source Availability and Local Builds
+
+This repository is a source-available public shell for Switch++, not a complete open-source distribution and not an OSI open-source project. The public repository contains the frontend UI, Tauri shell, configuration previews, provider presets, and public documentation. The paid edition's core native implementation, license enforcement, local config writes, local compatibility gateway, environment install/uninstall logic, and selected diagnostics remain in a private core.
+
+`src-tauri/src/lib.rs` includes `.private/agent-switch-private-core/src-tauri-core/src/lib.rs`. That private core is not distributed with the public repository, so cloning this repository alone cannot produce a complete official app build. Users should install Switch++ from the release page. The public source is intended for reviewing the public interface, understanding public behavior, filing issues, and contributing to the public layer.
+
+When the private core is not present, the test runner skips internal-only tests that depend on it. Full builds, full test coverage, and official releases run in the maintainer environment.
+
 ## First Launch on macOS
 
 If macOS says it cannot verify the developer, first confirm that the installer came from this repository's release page, then try:

@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.8 - 2026-06-14
+
+Switch++ 小版本更新。本次聚焦授权边界和源码开放边界，避免授权状态异常或公开源码本地构建造成错误放行。
+
+### 功能亮点 / Highlights
+
+- 授权状态读取失败时默认锁定付费功能，不再把异常状态当作可用试用状态放行。 / License status failures now lock paid access by default instead of treating an unknown state as an active trial.
+- 收紧客户端授权判断：缺少 `access_allowed` 时默认视为未授权，并补充回归测试防止失败放行逻辑回退。 / Hardened client-side access checks so missing `access_allowed` defaults to locked, with regression coverage against fail-open behavior.
+- 明确公开仓库是 source-available shell，不是完整官方构建；核心 native 实现、授权校验、配置写入、gateway 和安装诊断能力仍保留在私有 core。 / Clarified that the public repository is a source-available shell rather than the complete official build; the native core, licensing, config writes, gateway, and selected diagnostics remain private.
+- 无私有 core 的环境会跳过内部专用测试，便于公开层审阅与贡献，同时官方发布仍在维护者环境运行完整验证。 / Environments without the private core now skip internal-only tests for public review and contribution, while official releases still run full maintainer-side verification.
+
+### 界面预览 / Screenshots
+
+**授权设置 / License Settings**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.7 - 2026-06-14
 
 Switch++ 小版本更新。本次聚焦官方版授权体验、试用期锁定和更新安全性，让免费试用与激活后的状态更清楚。

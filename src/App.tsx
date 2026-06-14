@@ -792,7 +792,7 @@ function App() {
 
   const currentEnvPlatform = envResults?.platform ?? browserEnvPlatform();
   const currentEnvPlatformLabel = envResults?.platform_label ?? envPlatformLabel(currentEnvPlatform);
-  const licenseAccessAllowed = licenseControlsEnabled ? (licenseStatus?.access_allowed ?? true) : true;
+  const licenseAccessAllowed = licenseControlsEnabled ? (licenseStatus?.access_allowed ?? false) : true;
   const effectiveView = licenseAccessAllowed ? view : "license_locked";
 
   function guardLicensedNavigation() {
@@ -1235,10 +1235,10 @@ function App() {
     } catch (error) {
       setLicenseStatus({
         activated: false,
-        access_allowed: true,
-        license_state: "trial",
+        access_allowed: false,
+        license_state: "invalid",
         verification_status: "offline",
-        message: `读取授权状态失败：${String(error)}`,
+        message: `读取授权状态失败，请刷新状态或重新激活：${String(error)}`,
       });
       setLicenseError(`读取授权状态失败：${String(error)}`);
     }

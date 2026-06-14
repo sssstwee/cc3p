@@ -7,6 +7,9 @@ function readSource(path: string) {
   return readFileSync(new URL(path, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 }
 
+const hasPrivateCore = existsSync(new URL("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs", import.meta.url));
+const privateCoreTestOptions = hasPrivateCore ? {} : { skip: "requires-private-core" };
+
 test("targetOptions module exports expected values", async () => {
   const mod = await import("./targetOptions.ts");
   assert.equal(Array.isArray(mod.targetOptions), true);
@@ -122,6 +125,23 @@ test("public docs and release metadata do not advertise legacy repository names"
   }
 });
 
+test("public docs describe the source-available shell and private core build boundary", () => {
+  const readme = readSource("../README.md");
+  const readmeEn = readSource("../README.en.md");
+
+  assert.equal(readme.includes("部分源码开放版本（source-available）"), true);
+  assert.equal(readme.includes("不是完整开源发行版，也不是 OSI 定义的开源项目"), true);
+  assert.equal(readme.includes(".private/agent-switch-private-core/src-tauri-core/src/lib.rs"), true);
+  assert.equal(readme.includes("仅 clone 本仓库不能构建出完整可用的官方应用"), true);
+  assert.equal(readme.includes("跳过标记为 internal-only 的私库依赖测试"), true);
+
+  assert.equal(readmeEn.includes("source-available public shell"), true);
+  assert.equal(readmeEn.includes("not a complete open-source distribution and not an OSI open-source project"), true);
+  assert.equal(readmeEn.includes(".private/agent-switch-private-core/src-tauri-core/src/lib.rs"), true);
+  assert.equal(readmeEn.includes("cloning this repository alone cannot produce a complete official app build"), true);
+  assert.equal(readmeEn.includes("skips internal-only tests"), true);
+});
+
 test("official distribution uses Tauri signed updater for in-app installs", () => {
   const packageJson = JSON.parse(readSource("../package.json"));
   const cargoToml = readSource("../src-tauri/Cargo.toml");
@@ -173,7 +193,7 @@ test("Tauri build script reruns when app icons change", () => {
   assert.equal(buildRs.includes("cargo:rerun-if-changed=icons/icon.ico"), true);
 });
 
-test("macOS tray icon is explicitly installed as a template image", () => {
+test("macOS tray icon is explicitly installed as a template image", privateCoreTestOptions, () => {
   const appShell = readSource("../.private/agent-switch-private-core/src-tauri-core/src/app_shell.rs");
 
   assert.equal(appShell.includes("include_bytes!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/icons/tray-template.png\"))"), true);
@@ -390,7 +410,7 @@ test("App delegates env check card assembly to env-check feature", () => {
   assert.equal(appTsx.includes("请安装 OpenClaw；推荐使用官方安装脚本或 npm i -g openclaw"), false);
 });
 
-test("private core delegates MCP and skills commands to modules", () => {
+test("private core delegates MCP and skills commands to modules", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
   const mcpSource = readSource("../.private/agent-switch-private-core/src-tauri-core/src/mcp.rs");
   const skillsSource = readSource("../.private/agent-switch-private-core/src-tauri-core/src/skills.rs");
@@ -405,7 +425,7 @@ test("private core delegates MCP and skills commands to modules", () => {
   assert.equal(privateCore.includes("fn read_skills()"), false);
 });
 
-test("private core keeps proxy token parsing in the metrics module", () => {
+test("private core keeps proxy token parsing in the metrics module", privateCoreTestOptions, () => {
   const proxySource = readSource("../.private/agent-switch-private-core/src-tauri-core/src/codex_proxy.rs");
   const metricsSource = readSource("../.private/agent-switch-private-core/src-tauri-core/src/codex_proxy/codex_proxy_metrics.rs");
 
@@ -418,7 +438,7 @@ test("private core keeps proxy token parsing in the metrics module", () => {
   assert.equal(proxySource.includes("fn proxy_cache_tokens(usage: &Value)"), false);
 });
 
-test("private core does not inject Codex Desktop runtime", () => {
+test("private core does not inject Codex Desktop runtime", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
 
   assert.equal(privateCore.includes("async fn launch_codex_plugin_unlocker"), false);
@@ -441,7 +461,7 @@ test("private core does not inject Codex Desktop runtime", () => {
   assert.equal(privateCore.includes("Contents/Resources/app.asar"), false);
 });
 
-test("private core migrates legacy app state before startup import", () => {
+test("private core migrates legacy app state before startup import", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
   const loadAppStateStart = privateCore.indexOf("fn load_app_state()");
   const autostartProxyStart = privateCore.indexOf("fn autostart_active_proxies()");
@@ -456,7 +476,7 @@ test("private core migrates legacy app state before startup import", () => {
   );
 });
 
-test("Codex profile application does not patch the Codex app bundle", () => {
+test("Codex profile application does not patch the Codex app bundle", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
   const applyCodexStart = privateCore.indexOf("fn apply_codex_profile_direct");
   const writeCatalogStart = privateCore.indexOf("fn write_codex_model_catalog");
@@ -467,7 +487,7 @@ test("Codex profile application does not patch the Codex app bundle", () => {
   assert.equal(applyCodexSource.includes("ensure_codex_desktop_model_picker_allows_custom_catalog"), false);
 });
 
-test("Codex gateway toggle uses route-aware profile application", () => {
+test("Codex gateway toggle uses route-aware profile application", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
   const toggleStart = privateCore.indexOf("fn stop_codex_proxy_and_switch_to_direct");
   const toggleEnd = privateCore.indexOf("fn applied_codex_profile_mut");
@@ -481,7 +501,7 @@ test("Codex gateway toggle uses route-aware profile application", () => {
   assert.equal(toggleSource.includes("apply_codex_profile_direct(&proxy_profile)?;"), false);
 });
 
-test("Codex fallback records chat completions with the resolved upstream model", () => {
+test("Codex fallback records chat completions with the resolved upstream model", privateCoreTestOptions, () => {
   const proxySource = readSource("../.private/agent-switch-private-core/src-tauri-core/src/codex_proxy.rs");
   const fallbackStart = proxySource.indexOf("async fn fallback_handler");
   const fallbackEnd = proxySource.indexOf("fn fallback_upstream_url");
@@ -495,7 +515,7 @@ test("Codex fallback records chat completions with the resolved upstream model",
   assert.equal(fallbackSource.includes("config.model,\n        input_detail"), false);
 });
 
-test("private core keeps legacy app update mock environment variables", () => {
+test("private core keeps legacy app update mock environment variables", privateCoreTestOptions, () => {
   const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
 
   assert.equal(privateCore.includes('std::env::var("AGENT_SWITCH_APP_UPDATE_MOCK")'), true);
