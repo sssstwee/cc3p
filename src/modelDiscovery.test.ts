@@ -31,6 +31,24 @@ includes(minimaxModels, "MiniMax-M2.7");
 includes(minimaxModels, "MiniMax-M2.5");
 includes(minimaxModels, "MiniMax-M1");
 
+const openaiPackage = allVendorPresets.find((preset) => preset.id === "openai-package") ?? null;
+const officialCodexModels = filterProviderModelCandidates(
+  [
+    "gpt-5.3-codex-spark",
+    "gpt-5.6-luna",
+    "gpt-5.4-mini",
+    "gpt-5.5",
+    "gpt-5.6-terra",
+    "gpt-5.4",
+    "gpt-5.6-sol",
+  ],
+  openaiPackage,
+);
+equal(
+  officialCodexModels.join(","),
+  "gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,gpt-5.5,gpt-5.4,gpt-5.4-mini,gpt-5.3-codex-spark",
+);
+
 const openrouter = allVendorPresets.find((preset) => preset.id === "openrouter") ?? null;
 equal(isAggregatorPreset(openrouter), true);
 const aggregatedModels = filterProviderModelCandidates(

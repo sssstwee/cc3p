@@ -7,8 +7,8 @@ export const targetOptions: TargetMeta[] = [
   {
     key: "codex",
     title: "Codex",
-    summary: "Codex CLI/Desktop 的 provider 与本地网关",
-    description: "维护 Codex 官方账号登录态、三方 provider 和本地兼容网关。",
+    summary: "Codex 官方登录与三方连接",
+    description: "管理官方登录、三方 provider 和兼容网关。",
     configFileLabel: "Codex 配置文件",
     configFilePath: "~/.codex/config.toml + ~/.codex/auth.json",
     logo: "/target-icons/codex.svg",

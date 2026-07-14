@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.0.14 - 2026-07-14
+
+Switch++ 小版本更新。本次重点修复上游应用、模型和配置项演进后产生的兼容偏差，让 Claude、Codex 与当前 ChatGPT 桌面端配置保持一致。
+
+### 功能亮点 / Highlights
+
+- 修复 Claude 官方套餐配置可能残留三方网关环境变量的问题；Claude Code 与 Claude Desktop 恢复官方连接时会清理 Switch++ 路由覆盖，同时继续区分 Anthropic API 直连和本地兼容网关。 / Fixed stale third-party gateway variables when restoring official Claude access, while keeping direct Anthropic API and local gateway modes separate.
+- 更新 Codex 模型与配置支持：同步新的 GPT-5.6 模型槽位，新增 Ollama / LM Studio `oss_provider` 选择，并移除已过时的 Undo 配置项。 / Updated Codex model and configuration support with new GPT-5.6 slots, Ollama / LM Studio `oss_provider` selection, and removal of the obsolete Undo option.
+- 更新厂商预设、模型发现和配置预览，让保存后的真实配置与界面候选保持一致，并补充对应回归测试。 / Updated vendor presets, model discovery, and configuration previews so saved output matches UI candidates, with regression coverage added.
+- 环境检查现在识别当前 `ChatGPT.app` 中的 Codex 桌面能力，同时保留旧版 `Codex.app` 检测，并避免把 ChatGPT 误列为 Codex 卸载目标。 / Environment checks now recognize Codex desktop capabilities in `ChatGPT.app`, retain legacy `Codex.app` detection, and avoid offering ChatGPT as a Codex uninstall target.
+- 统一前端包、Rust crate 与开发二进制名称为 `switch-plus-plus`，避免开发启动脚本查找旧二进制名。 / Unified the frontend package, Rust crate, and development binary name as `switch-plus-plus` to prevent the dev runner from looking for the obsolete binary name.
+
+### 界面预览 / Screenshots
+
+**Codex 配置 / Codex Configuration**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.13 - 2026-06-15
 
 Switch++ 小版本更新。本次修复自动更新安装并重启后，首次启动侧边栏菜单可能短时间无响应的问题。

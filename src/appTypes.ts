@@ -68,7 +68,6 @@ export type GatewayConfigOptions = {
   disable_terminal_title: boolean;
   api_timeout_long: boolean;
   skip_webfetch_preflight: boolean;
-  skip_introduction: boolean;
   bypass_permissions: boolean;
   disable_telemetry: boolean;
   disable_nonessential_traffic: boolean;

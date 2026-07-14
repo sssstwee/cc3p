@@ -8,3 +8,11 @@ test("English mode translates gateway switch labels as whole phrases", () => {
   assert.equal(translateUiText("刷新", "en"), "Refresh");
   assert.equal(translateUiText("刷新：重新写入配置", "en"), "Refresh: rewrite config");
 });
+
+test("English mode names the merged ChatGPT Codex desktop app", () => {
+  assert.equal(translateUiText("ChatGPT（Codex）", "en"), "ChatGPT (Codex)");
+  assert.equal(
+    translateUiText("请安装最新版 ChatGPT；Codex 桌面功能已集成在 ChatGPT 中。", "en"),
+    "Install the latest ChatGPT app; Codex desktop features are now integrated into ChatGPT.",
+  );
+});

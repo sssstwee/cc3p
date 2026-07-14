@@ -402,11 +402,25 @@ equal(claudeDesktopPresetIds.includes("anthropic-package"), true);
 equal(claudeDesktopPresetIds.includes("openai-package"), false);
 
 const anthropicPackage = requiredPreset("anthropic-package");
-equal(anthropicPackage.model_map.main, "Fable5");
-equal(anthropicPackage.model_map.opus, "Fable5");
-equal(anthropicPackage.model_map.sonnet, "Fable5");
-equal(anthropicPackage.model_map.haiku, "Fable5");
-equal(anthropicPackage.models.includes("Fable5"), true);
+equal(anthropicPackage.model_map.main, "default");
+equal(anthropicPackage.model_map.opus, "default");
+equal(anthropicPackage.model_map.sonnet, "default");
+equal(anthropicPackage.model_map.haiku, "default");
+equal(anthropicPackage.models.join(","), "default");
+
+const anthropicApi = requiredPreset("anthropic");
+equal(anthropicApi.auth_field, "ANTHROPIC_API_KEY");
+equal(anthropicApi.model_map.main, "claude-fable-5");
+equal(anthropicApi.model_map.opus, "claude-opus-4-8");
+equal(anthropicApi.model_map.sonnet, "claude-sonnet-5");
+equal(anthropicApi.model_map.haiku, "claude-haiku-4-5-20251001");
+
+const openaiPackage = requiredPreset("openai-package");
+equal(openaiPackage.model_map.main, "gpt-5.6-sol");
+equal(
+  openaiPackage.models.join(","),
+  "gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,gpt-5.5,gpt-5.4,gpt-5.4-mini,gpt-5.3-codex-spark",
+);
 
 function codexCompatModeForPresetForTest(preset: VendorPreset): CodexCompatMode {
   if (preset.codex_compat_mode) return preset.codex_compat_mode;

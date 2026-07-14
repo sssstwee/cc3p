@@ -4,6 +4,7 @@ import {
   codexConfigOptionItems,
   getCodexConfigOptionSupport,
 } from "../codexConfig.ts";
+import type { CodexOssProvider } from "../codexConfig.ts";
 import { extractTomlAssignment } from "../gatewayProfile.ts";
 import { Tooltip } from "../nativeUi.tsx";
 import { CODEX_LOCAL_PROXY_BASE_URL } from "../configPreviews.ts";
@@ -20,6 +21,7 @@ type CodexConfigPanelProps = {
   onAuthJsonChange: (value: string) => void;
   onConfigTomlChange: (value: string, model: string) => void;
   onCodexConfigOptionChange: (key: string, checked: boolean) => void;
+  onCodexOssProviderChange: (value: CodexOssProvider) => void;
   onImportOfficialProfile: () => void;
   onApplyRecommended: () => void;
 };
@@ -36,6 +38,7 @@ export function CodexConfigPanel({
   onAuthJsonChange,
   onConfigTomlChange,
   onCodexConfigOptionChange,
+  onCodexOssProviderChange,
   onImportOfficialProfile,
   onApplyRecommended,
 }: CodexConfigPanelProps) {
@@ -70,7 +73,7 @@ export function CodexConfigPanel({
                   className="ccr-inline-sync-action ccr-config-json-sync"
                 >
                   <RefreshCwIcon className="h-3 w-3" />
-                  同步
+                  同步本机 Codex 配置
                 </button>
                 <textarea
                   className="ccr-config-json ccr-config-json-editor"
@@ -81,7 +84,7 @@ export function CodexConfigPanel({
                 />
               </div>
               <span className="ccr-field-help">
-                官方账号模式会写入 `~/.codex/auth.json`；同步只读取本机 Codex 官方登录产生的认证内容。
+                auth.json 包含登录凭据；仅从本机 Codex 同步，请勿复制或分享。
               </span>
             </div>
           ) : null}
@@ -89,7 +92,7 @@ export function CodexConfigPanel({
             <label>{isOfficialCodexDirect ? "config.toml (TOML)" : "生成的三方 provider (TOML)"}</label>
             {!isOfficialCodexDirect ? (
               <div className="ccr-note-box">
-                三方配置会写入 custom provider、model_catalog_json 和本地 /models catalog；主模型流量会按当前三方 provider 路由。插件、移动端和 connector 属于 Codex 官方账号能力，三方配置下不保证入口或运行时可用；需要管理或验证插件时请切回官方配置。
+                三方配置使用独立 custom provider；通过 Switch++ profile 切换，不会并入官方账号模型菜单。
               </div>
             ) : null}
             <div className="ccr-option-actions">
@@ -106,6 +109,20 @@ export function CodexConfigPanel({
                   应用推荐配置
                 </button>
               </div>
+            </div>
+            <div className="ccr-edit-field">
+              <label>OSS 默认本地 provider</label>
+              <select
+                value={addForm.codex_config_options.oss_provider}
+                onChange={(event) => onCodexOssProviderChange(event.currentTarget.value as CodexOssProvider)}
+              >
+                <option value="">不设置</option>
+                <option value="ollama">Ollama</option>
+                <option value="lmstudio">LM Studio</option>
+              </select>
+              <span className="ccr-field-help">
+                写入全局顶层 oss_provider，供 codex --oss 选择 Ollama 或 LM Studio；与当前 model_provider 和登录方式无关。
+              </span>
             </div>
             <div className="ccr-config-options">
               {codexConfigOptionItems.map((option) => {
@@ -174,17 +191,6 @@ export function CodexConfigPanel({
               })}
             </div>
             <div className="ccr-config-json-shell">
-              {isOfficialCodexDirect ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={onImportOfficialProfile}
-                  className="ccr-inline-sync-action ccr-config-json-sync"
-                >
-                  <RefreshCwIcon className="h-3 w-3" />
-                  同步
-                </button>
-              ) : null}
               <textarea
                 className="ccr-config-json ccr-config-json-editor"
                 spellCheck={false}

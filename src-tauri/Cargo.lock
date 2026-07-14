@@ -3866,8 +3866,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "switchpp"
-version = "1.0.13"
+name = "switch-plus-plus"
+version = "1.0.14"
 dependencies = [
  "axum",
  "dirs",

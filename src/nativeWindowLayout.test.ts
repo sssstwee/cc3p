@@ -204,8 +204,8 @@ equal(appTsx.includes("import { targetOptions, visibleTargetOptions } from \"./t
 equal(envCheckCardOrder.join(","), "codex_cli,codex_desktop,claude_cli,claude_desktop,opencode,oh_my_opencode,openclaw,hermes,pi,oh_my_pi");
 equal(envCheckCardOrder.includes("antigravity"), false);
 equal(targetOptionsContent.includes('key: "antigravity"'), true);
-equal(targetOptionsContent.includes('summary: "Codex CLI/Desktop 的 provider 与本地网关"'), true);
-equal(targetOptionsContent.includes('description: "维护 Codex 官方账号登录态、三方 provider 和本地兼容网关。"'), true);
+equal(targetOptionsContent.includes('summary: "Codex 官方登录与三方连接"'), true);
+equal(targetOptionsContent.includes('description: "管理官方登录、三方 provider 和兼容网关。"'), true);
 equal(targetOptionsContent.includes("Codex CLI 与 Desktop 共享默认 ~/.codex 配置"), false);
 equal(targetOptionsContent.includes("codex-shim"), false);
 equal(targetOptionsContent.includes('key: "opencode"'), true);

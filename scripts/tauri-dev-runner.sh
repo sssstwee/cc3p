@@ -43,7 +43,7 @@ else
   binary_dir="$target_dir/$profile"
 fi
 
-source_binary="$binary_dir/switchpp"
+source_binary="$binary_dir/switch-plus-plus"
 display_binary="$binary_dir/Switch++"
 rm -f "$display_binary"
 cp "$source_binary" "$display_binary"

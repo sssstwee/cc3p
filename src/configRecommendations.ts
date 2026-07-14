@@ -93,9 +93,7 @@ export function getCodexThinkOutputAdvice(input: CodexThinkAdviceInput): CodexTh
 
 const recommendedClaudeGatewayOptions = new Set([
   "enable_tool_search",
-  "enable_stream_watchdog",
   "api_timeout_long",
-  "skip_introduction",
   "auto_compact",
   "compact_early",
 ]);

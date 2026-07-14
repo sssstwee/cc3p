@@ -21,12 +21,14 @@ equal(ohMyOpenAgentCard?.launchCommand, "opencode");
 deepEqual(ohMyOpenAgentCard?.launchArgs, []);
 
 const codexDesktopCard = cards.find((card) => card.key === "codex_desktop");
+equal(codexDesktopCard?.title, "ChatGPT（Codex）");
 equal(codexDesktopCard?.launchCommand, "open");
-deepEqual(codexDesktopCard?.launchArgs, ["-a", "Codex"]);
+deepEqual(codexDesktopCard?.launchArgs, ["-b", "com.openai.codex"]);
 
 const appSource = readSource("./App.tsx");
 const envCheckCardsSource = readSource("./features/env-check/envCheckCards.ts");
 equal(envCheckCardsSource.includes("请先安装 OpenCode"), true);
+equal(envCheckCardsSource.includes("Codex 桌面功能已集成在 ChatGPT 中"), true);
 equal(envCheckCardsSource.includes("它是独立增强版 CLI"), true);
 equal(appSource.includes("启动命令"), true);
 equal(appSource.includes("启动参数"), true);
@@ -34,3 +36,4 @@ equal(appSource.includes("launchCommandDisplay(item)"), true);
 equal(appSource.includes("launchArgsDisplay(item)"), true);
 equal(appSource.includes(': "无"'), false);
 equal(appSource.includes('item.badge.includes("桌面端")'), true);
+equal(appSource.includes('record.label !== "ChatGPT.app"'), true);

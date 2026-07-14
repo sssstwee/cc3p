@@ -267,9 +267,6 @@ export function formFromConfigJson(form: AddForm, raw: string): AddForm {
       skip_webfetch_preflight:
         (parsed as { skipWebFetchPreflight?: unknown }).skipWebFetchPreflight === true ||
         form.config_options.skip_webfetch_preflight,
-      skip_introduction:
-        (parsed as { skipIntroduction?: unknown }).skipIntroduction !== false &&
-        form.config_options.skip_introduction,
       bypass_permissions:
         permissions.defaultMode === "bypassPermissions" ||
         permissions.skipDangerousModePermissionPrompt === true ||

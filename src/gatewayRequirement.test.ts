@@ -214,7 +214,7 @@ equal(gatewayRequirementForProfile("codex", officialCodexProfile).label, "无需
 equal(gatewayRequirementForProfile("codex", officialCodexProfile).cornerLabel, "无需");
 equal(
   gatewayRequirementForProfile("codex", officialCodexProfile).detail,
-  "OpenAI 套餐走 Codex 官方登录与配置路径，Switch++ 不接管模型，也不提供本地网关开关。需要网关调用记录时请切换到三方配置。",
+  "OpenAI 套餐直连 Codex 官方服务，不经过 Switch++ 网关；调用记录仅适用于三方网关配置。",
 );
 equal(gatewayRequirementForProfile("codex", directThirdPartyCodexResponsesProfile).label, "建议开启");
 equal(gatewayRequirementForProfile("codex", directThirdPartyCodexResponsesProfile).cornerLabel, "建议");

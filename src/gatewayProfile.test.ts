@@ -6,6 +6,7 @@ import {
   isAsciiHeaderValue,
   isModelMapEmpty,
   isOfficialAnthropicBaseUrl,
+  modelSupports1mContext,
   resolveGatewayFormCompatMode,
   resolveGatewayUpstreamModel,
   validateProviderModelMap,
@@ -64,7 +65,6 @@ const baseProfile: GatewayProfile = {
     disable_terminal_title: false,
     api_timeout_long: false,
     skip_webfetch_preflight: false,
-    skip_introduction: false,
     bypass_permissions: false,
     disable_telemetry: false,
     disable_nonessential_traffic: false,
@@ -113,6 +113,9 @@ equal(isAsciiHeaderValue("sk-test"), true);
 equal(isAsciiHeaderValue("sk-测试"), false);
 equal(isModelMapEmpty(defaultModelMap("")), true);
 equal(isModelMapEmpty({ ...defaultModelMap(""), haiku: "deepseek-v4-flash" }), false);
+equal(modelSupports1mContext("claude-fable-5"), true);
+equal(modelSupports1mContext("claude-opus-4-8"), true);
+equal(modelSupports1mContext("claude-sonnet-5"), true);
 equal(
   validateProviderModelMap(defaultModelMap(""), "https://api.deepseek.com/anthropic"),
   "请填写主模型对应的上游真实模型。",

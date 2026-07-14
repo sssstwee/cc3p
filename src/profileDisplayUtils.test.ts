@@ -52,10 +52,10 @@ function gatewayProfile(overrides: Partial<GatewayProfile>): GatewayProfile {
   };
 }
 
-equal(profileConfigMeta(codexProfile({})), "模型: qwen3.6-plus · 网关");
-equal(profileConfigMeta(codexProfile({ compat_mode: "proxy", api_format: "openai_chat" })), "模型: qwen3.6-plus · 网关");
-equal(profileConfigMeta(codexProfile({ compat_mode: "direct" })), "模型: qwen3.6-plus · 网关");
-equal(profileConfigMeta(codexProfile({ connection_mode: "official", compat_mode: "direct" })), "模型: qwen3.6-plus · 官方");
+equal(profileConfigMeta(codexProfile({})), "模型: qwen3.6-plus · 本地网关");
+equal(profileConfigMeta(codexProfile({ compat_mode: "proxy", api_format: "openai_chat" })), "模型: qwen3.6-plus · 本地网关");
+equal(profileConfigMeta(codexProfile({ compat_mode: "direct" })), "模型: qwen3.6-plus · API 直连");
+equal(profileConfigMeta(codexProfile({ connection_mode: "official", compat_mode: "direct" })), "模型: qwen3.6-plus · 官方登录");
 equal(profileConfigMeta(gatewayProfile({})), "模型: claude-sonnet-4-6 · 网关");
 equal(profileConfigMeta(gatewayProfile({ compat_mode: "proxy" })), "模型: claude-sonnet-4-6 · 网关");
 equal(

@@ -15,8 +15,8 @@ import {
   type CodexConfigOptions,
 } from "./codexConfig.ts";
 import { sanitizeClaudeConfigOptionsForStableExperience } from "./gatewayConfigOptions.ts";
-import { isAsciiHeaderValue, modelSupports1mContext } from "./gatewayProfile.ts";
-import { claudeDesktopOfficialModels, claudeOfficialModelMap } from "./vendorPresets.ts";
+import { isAsciiHeaderValue, isOfficialAnthropicBaseUrl, modelSupports1mContext } from "./gatewayProfile.ts";
+import { claudeDesktopGatewayModelMap, claudeDesktopGatewayModels } from "./vendorPresets.ts";
 
 // Re-export for backward compatibility — consumers should prefer appConstants.ts directly.
 export { CODEX_LOCAL_PROXY_BASE_URL } from "./appConstants.ts";
@@ -132,17 +132,12 @@ function writeClaudePermissionOptions(target: Record<string, unknown>, configOpt
 }
 
 export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
-  if (isClaudeDesktopOfficialPackageForm(form)) {
+  if (isAnthropicOfficialPackageForm(form)) {
     const config: Record<string, unknown> = {
       agentSwitchClient: "Claude Desktop",
       agentSwitchConfigRole: "profile",
       agentSwitchRoute: "official",
       agentSwitchOfficialAuth: "claude.ai",
-      disableDeploymentModeChooser: true,
-      inferenceModels: buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels).map((model) => ({
-        name: model.name,
-        supports1m: model.supports_1m,
-      })),
       configOptions: form.config_options,
     };
     writeClaudePermissionOptions(config, form.config_options);
@@ -150,6 +145,27 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
   }
 
   const providerModelMap = form.provider_model_map ?? form.model_map;
+  if (isDirectAnthropicApiForm(form)) {
+    const config: Record<string, unknown> = {
+      agentSwitchClient: "Claude Desktop",
+      agentSwitchConfigRole: "profile",
+      agentSwitchRoute: "direct",
+      agentSwitchUpstreamBaseUrl: form.base_url,
+      disableDeploymentModeChooser: true,
+      inferenceProvider: "anthropic",
+      inferenceAnthropicApiKey: form.api_key,
+      inferenceModels: buildGatewayModels(providerModelMap, form.models).map((model) => ({
+        name: model.name,
+        supports1m: model.supports_1m,
+      })),
+      configOptions: form.config_options,
+      agentSwitchUpstreamModel: providerModelMap.main || form.model,
+      agentSwitchProviderModelMap: providerModelMap,
+    };
+    writeClaudePermissionOptions(config, form.config_options);
+    return JSON.stringify(config, null, 2);
+  }
+
   const usesLocalGateway = gatewayFormRequiresLocalProxy(form, "claude_desktop");
   const config: Record<string, unknown> = {
     agentSwitchClient: "Claude Desktop",
@@ -157,7 +173,7 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
     agentSwitchRoute: usesLocalGateway ? "local_gateway" : "direct",
     agentSwitchUpstreamBaseUrl: form.base_url,
     disableDeploymentModeChooser: true,
-    inferenceModels: buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels).map((model) => ({
+    inferenceModels: buildGatewayModels(claudeDesktopGatewayModelMap, claudeDesktopGatewayModels).map((model) => ({
       name: model.name,
       supports1m: model.supports_1m,
     })),
@@ -179,11 +195,19 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
   return JSON.stringify(config, null, 2);
 }
 
-function isClaudeDesktopOfficialPackageForm(form: AddForm) {
+function isAnthropicOfficialPackageForm(form: AddForm) {
   return !form.base_url.trim()
     && !form.api_key.trim()
     && form.api_format === "anthropic"
     && form.display_name.trim().toLowerCase().includes("anthropic");
+}
+
+function isDirectAnthropicApiForm(form: AddForm) {
+  return form.api_format === "anthropic"
+    && form.auth_field === "ANTHROPIC_API_KEY"
+    && Boolean(form.base_url.trim())
+    && Boolean(form.api_key.trim())
+    && isOfficialAnthropicBaseUrl(form.base_url);
 }
 
 export function buildClaudeDesktopMetaConfigPreview(
@@ -228,11 +252,19 @@ function escapeTomlString(value: string) {
 }
 
 function primaryGatewayModel(form: AddForm) {
-  return form.model || form.model_map.main || "gpt-5.4";
+  return form.model || form.model_map.main || "gpt-5.6-sol";
 }
 
-const CODEX_PROXY_MODEL_SLOT_PRIMARY = "gpt-5.5";
-const CODEX_PROXY_MODEL_SLOTS = ["gpt-5.5", "gpt-5.4-mini", "gpt-5.3-codex", "gpt-5.4", "gpt-5.2"] as const;
+const CODEX_PROXY_MODEL_SLOT_PRIMARY = "gpt-5.6-sol";
+const CODEX_PROXY_MODEL_SLOTS = [
+  "gpt-5.6-sol",
+  "gpt-5.6-terra",
+  "gpt-5.6-luna",
+  "gpt-5.5",
+  "gpt-5.4",
+  "gpt-5.4-mini",
+  "gpt-5.3-codex-spark",
+] as const;
 const CODEX_PROVIDER_DISPLAY_NAME = "Switch++";
 
 function codexClientModel(form: AddForm) {
@@ -750,7 +782,10 @@ export function buildTargetConfigPreview(form: AddForm, target: TargetKey = "cla
 }
 
 function claudeCodeAllows1mSuffix(baseUrl: string) {
-  return !baseUrl.trim().toLowerCase().includes("dashscope.aliyuncs.com");
+  const normalized = baseUrl.trim().toLowerCase();
+  return Boolean(normalized)
+    && !normalized.includes("api.anthropic.com")
+    && !normalized.includes("dashscope.aliyuncs.com");
 }
 
 function withClaudeCode1mSuffix(model: string, supports1mContextOverride: boolean | undefined, baseUrl: string) {
@@ -774,7 +809,8 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
   const configOptions = target === "claude_cli" || target === "claude_desktop"
     ? sanitizeClaudeConfigOptionsForStableExperience(form.config_options)
     : form.config_options;
-  const modelMap = target === "claude_cli"
+  const isOfficialPackage = target === "claude_cli" && isAnthropicOfficialPackageForm(form);
+  const modelMap = target === "claude_cli" && !isOfficialPackage
     ? {
       main: claudeCodeModelEnvValue(form.model_map.main, "main", form.supports_1m_context, form.base_url),
       opus: claudeCodeModelEnvValue(form.model_map.opus, "opus", form.supports_1m_context, form.base_url),
@@ -782,14 +818,16 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
       haiku: claudeCodeModelEnvValue(form.model_map.haiku, "haiku", form.supports_1m_context, form.base_url),
     }
     : form.model_map;
-  const env: Record<string, string> = {
-    ANTHROPIC_BASE_URL: gatewayConfigBaseUrl(form, target),
-    ...gatewayClientAuthEnv(form, target),
-    ANTHROPIC_MODEL: modelMap.main,
-    ANTHROPIC_DEFAULT_OPUS_MODEL: modelMap.opus,
-    ANTHROPIC_DEFAULT_SONNET_MODEL: modelMap.sonnet,
-    ANTHROPIC_DEFAULT_HAIKU_MODEL: modelMap.haiku,
-  };
+  const env: Record<string, string> = isOfficialPackage
+    ? {}
+    : {
+        ANTHROPIC_BASE_URL: gatewayConfigBaseUrl(form, target),
+        ...gatewayClientAuthEnv(form, target),
+        ANTHROPIC_MODEL: modelMap.main,
+        ANTHROPIC_DEFAULT_OPUS_MODEL: modelMap.opus,
+        ANTHROPIC_DEFAULT_SONNET_MODEL: modelMap.sonnet,
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: modelMap.haiku,
+      };
   const settings: Record<string, unknown> = { env };
   writeClaudePermissionOptions(settings, configOptions);
 
@@ -807,20 +845,21 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
     env.ENABLE_TOOL_SEARCH = "true";
   }
 
-  if (configOptions.enable_gateway_model_discovery) {
+  if (!isOfficialPackage && configOptions.enable_gateway_model_discovery) {
     env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1";
   }
 
-  if (configOptions.enable_custom_model_option) {
+  if (!isOfficialPackage && configOptions.enable_custom_model_option) {
     env.ANTHROPIC_CUSTOM_MODEL_OPTION = form.model_map.main;
     env.ANTHROPIC_CUSTOM_MODEL_OPTION_NAME = form.display_name || form.model_map.main;
     env.ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION = `${form.display_name || "Custom gateway"} · ${form.model_map.main}`;
   }
 
-  if (configOptions.declare_model_capabilities) {
-    env.ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES = "effort,max_effort,thinking,interleaved_thinking";
-    env.ANTHROPIC_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES = "effort,max_effort,thinking,interleaved_thinking";
-    env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = "effort,max_effort,thinking,interleaved_thinking";
+  if (!isOfficialPackage && configOptions.declare_model_capabilities) {
+    const capabilities = "effort,xhigh_effort,max_effort,thinking,adaptive_thinking,interleaved_thinking";
+    env.ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES = capabilities;
+    env.ANTHROPIC_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES = capabilities;
+    env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = capabilities;
   }
 
   if (configOptions.disable_experimental_betas) {
@@ -855,7 +894,6 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
   if (configOptions.max_thinking) {
     env.CLAUDE_CODE_EFFORT_LEVEL = "max";
     settings.alwaysThinkingEnabled = true;
-    settings.effortLevel = "max";
   }
 
   if (configOptions.enable_prompt_caching_1h) {
@@ -938,10 +976,6 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
     settings.skipWebFetchPreflight = true;
   }
 
-  if (configOptions.skip_introduction) {
-    settings.skipIntroduction = true;
-  }
-
   if (configOptions.disable_telemetry) {
     env.DISABLE_TELEMETRY = "1";
     env.DO_NOT_TRACK = "1";
@@ -959,6 +993,8 @@ export function buildGatewayConfigPreview(form: AddForm, target: TargetKey = "cl
   if (minimaxMcpServer) {
     settings.mcpServers = { MiniMax: minimaxMcpServer };
   }
+
+  if (Object.keys(env).length === 0) delete settings.env;
 
   return JSON.stringify(settings, null, 2);
 }

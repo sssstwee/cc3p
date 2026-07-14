@@ -51,7 +51,6 @@ export const defaultGatewayConfigOptions: GatewayConfigOptions = {
   disable_terminal_title: false,
   api_timeout_long: false,
   skip_webfetch_preflight: false,
-  skip_introduction: true,
   bypass_permissions: false,
   disable_telemetry: false,
   disable_nonessential_traffic: false,
@@ -169,8 +168,8 @@ export const gatewayConfigOptionItems: Array<{
   {
     key: "max_thinking",
     label: "最大强度思考",
-    description: "写入 CLAUDE_CODE_EFFORT_LEVEL=max，并设置 alwaysThinkingEnabled/effortLevel，优先使用最高思考强度。",
-    configFields: ["env.CLAUDE_CODE_EFFORT_LEVEL", "alwaysThinkingEnabled", "effortLevel"],
+    description: "写入 CLAUDE_CODE_EFFORT_LEVEL=max，并设置 alwaysThinkingEnabled，优先使用最高思考强度。",
+    configFields: ["env.CLAUDE_CODE_EFFORT_LEVEL", "alwaysThinkingEnabled"],
   },
   {
     key: "enable_prompt_caching_1h",
@@ -287,12 +286,6 @@ export const gatewayConfigOptionItems: Array<{
     configFields: ["skipWebFetchPreflight"],
   },
   {
-    key: "skip_introduction",
-    label: "跳过首次引导",
-    description: "写入 skipIntroduction=true，跳过 Claude Code 首次启动的新手引导/安装确认流程。",
-    configFields: ["skipIntroduction"],
-  },
-  {
     key: "bypass_permissions",
     label: "Bypass permissions",
     description: "写入 permissions.defaultMode=\"bypassPermissions\" 与 skipDangerousModePermissionPrompt=true，跳过工具权限提示；仅适合隔离容器、VM 或完全信任的本机环境。",
@@ -361,7 +354,6 @@ const alwaysSupportedConfigOptions = new Set<GatewayConfigOptionKey>([
   "disable_prompt_suggestions",
   "disable_terminal_title",
   "api_timeout_long",
-  "skip_introduction",
   "bypass_permissions",
   "disable_telemetry",
   "disable_nonessential_traffic",
@@ -597,9 +589,7 @@ const documentedClaudeCodeGatewayPresets = new Set([
 export const recommendedClaudeGatewayConfigOptionKeys = new Set<GatewayConfigOptionKey>([
   "hide_ai_signature",
   "enable_tool_search",
-  "enable_stream_watchdog",
   "api_timeout_long",
-  "skip_introduction",
   "auto_compact",
   "compact_early",
   "disable_telemetry",
@@ -607,7 +597,6 @@ export const recommendedClaudeGatewayConfigOptionKeys = new Set<GatewayConfigOpt
 ]);
 
 export const recommendedClaudeDesktopConfigOptionKeys = new Set<GatewayConfigOptionKey>([
-  "enable_stream_watchdog",
   "api_timeout_long",
   "disable_telemetry",
   "disable_nonessential_traffic",
@@ -922,6 +911,7 @@ export function withRecommendedGatewayTargetConfigOptions(
 export function recommendedCodexConfigOptionsForForm(form: AddForm, preset: VendorPreset | null = null): CodexConfigOptions {
   const current = normalizeCodexConfigOptions(form.codex_config_options);
   const next = normalizeCodexConfigOptions({});
+  next.oss_provider = current.oss_provider;
   for (const option of codexConfigOptionItems) {
     const support = getCodexConfigOptionSupport(option, {
       model: form.model,

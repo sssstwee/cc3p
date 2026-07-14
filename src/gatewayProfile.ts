@@ -32,6 +32,9 @@ function canonicalModelCapabilityId(model: string) {
 const known1mModelIds = [
   "deepseek-v4-pro",
   "deepseek-v4-flash",
+  "claude-fable-5",
+  "claude-opus-4-8",
+  "claude-sonnet-5",
   "claude-opus-4-7",
   "claude-opus-4-6",
   "claude-sonnet-4-6",

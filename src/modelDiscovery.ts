@@ -226,6 +226,17 @@ export function filterProviderModelCandidates(
   const unique = uniqueModels(models);
   if (unique.length <= 1) return unique;
 
+  if (preset?.id === "openai-package") {
+    const modelOrder = new Map(preset.models.map((model, index) => [model.toLowerCase(), index]));
+    return [...unique]
+      .sort((left, right) => {
+        const orderDifference = (modelOrder.get(left.toLowerCase()) ?? modelOrder.size)
+          - (modelOrder.get(right.toLowerCase()) ?? modelOrder.size);
+        return orderDifference || modelFreshnessScore(right) - modelFreshnessScore(left) || left.localeCompare(right);
+      })
+      .slice(0, Math.min(20, limit));
+  }
+
   if (isAggregatorPreset(preset)) {
     const categoryFn = isBailianPreset(preset) ? bailianAggregatorCategory : popularAggregatorCategory;
     const withoutOther = unique.filter((model) => categoryFn(model) !== "other");

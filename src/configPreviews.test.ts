@@ -15,6 +15,7 @@ import {
 } from "./configPreviews.ts";
 import { defaultCodexConfigOptions } from "./codexConfig.ts";
 import { defaultModelMap } from "./gatewayProfile.ts";
+import { customPreset } from "./vendorPresets.ts";
 
 function equal<T>(actual: T, expected: T) {
   if (actual !== expected) {
@@ -79,7 +80,7 @@ includes(
 
 includes(
   buildCodexConfigTomlTemplate(baseCodexForm),
-  'model = "gpt-5.5"',
+  'model = "gpt-5.6-sol"',
 );
 
 excludes(
@@ -155,6 +156,27 @@ const websocketDisabledCodexConfig = buildCodexConfigTomlTemplate({
 includes(websocketDisabledCodexConfig, "[model_providers.custom]");
 includes(websocketDisabledCodexConfig, "supports_websockets = false");
 
+const thirdPartyCodexConfigWithOssProvider = buildCodexConfigTomlTemplate({
+  ...baseCodexForm,
+  codex_config_options: {
+    ...defaultCodexConfigOptions,
+    oss_provider: "ollama",
+  },
+});
+includes(thirdPartyCodexConfigWithOssProvider, 'oss_provider = "ollama"');
+
+const customCodexConfigWithOssProvider = buildCodexConfigTomlTemplate(
+  {
+    ...baseCodexForm,
+    codex_config_options: {
+      ...defaultCodexConfigOptions,
+      oss_provider: "lmstudio",
+    },
+  },
+  customPreset,
+);
+includes(customCodexConfigWithOssProvider, 'oss_provider = "lmstudio"');
+
 includes(
   buildCodexConfigTomlTemplate({ ...baseCodexForm, api_format: "openai_chat" }),
   "# agent-switch codex compat: local gateway responses-to-chat",
@@ -194,12 +216,12 @@ includes(
     description: string;
     isDefault?: boolean;
   }>;
-  const primarySlot = models.find((model) => model.slug === "gpt-5.5");
-  const miniSlot = models.find((model) => model.slug === "gpt-5.4-mini");
-  const coderSlot = models.find((model) => model.slug === "gpt-5.3-codex");
+  const primarySlot = models.find((model) => model.slug === "gpt-5.6-sol");
+  const terraSlot = models.find((model) => model.slug === "gpt-5.6-terra");
+  const lunaSlot = models.find((model) => model.slug === "gpt-5.6-luna");
   equal(primarySlot?.display_name, "qwen3.6-plus");
-  equal(miniSlot?.display_name, undefined);
-  equal(coderSlot?.display_name, undefined);
+  equal(terraSlot?.display_name, undefined);
+  equal(lunaSlot?.display_name, undefined);
   equal(primarySlot?.isDefault, true);
   equal(models.length, 1);
 }
@@ -240,6 +262,7 @@ includes(
 {
   const directCatalog = JSON.parse(buildCodexModelCatalogPreview({ ...baseCodexForm, compat_mode: "direct" }));
   const slugs = (directCatalog.models as Array<{ slug: string }>).map((model) => model.slug);
+  equal(slugs.includes("gpt-5.6-sol"), false);
   equal(slugs.includes("gpt-5.5"), false);
   equal(slugs.includes("qwen3.6-plus"), true);
   includes(
@@ -287,6 +310,31 @@ includes(autoCompactClaudePreview, '"ANTHROPIC_MODEL": "deepseek-v4-pro[1m]"');
 includes(autoCompactClaudePreview, '"ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro[1m]"');
 includes(autoCompactClaudePreview, '"ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro[1m]"');
 includes(autoCompactClaudePreview, '"ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-pro"');
+
+const officialClaudeCodePreview = buildGatewayConfigPreview({
+  ...baseCodexForm,
+  display_name: "Anthropic 套餐",
+  base_url: "",
+  api_key: "",
+  api_format: "anthropic",
+  auth_field: "ANTHROPIC_AUTH_TOKEN",
+  model: "fable",
+  model_map: {
+    main: "fable",
+    opus: "opus",
+    sonnet: "sonnet",
+    haiku: "haiku",
+  },
+  supports_1m_context: true,
+  config_options: {} as AddForm["config_options"],
+});
+
+excludes(officialClaudeCodePreview, "ANTHROPIC_MODEL");
+excludes(officialClaudeCodePreview, "ANTHROPIC_DEFAULT_OPUS_MODEL");
+excludes(officialClaudeCodePreview, "ANTHROPIC_DEFAULT_SONNET_MODEL");
+excludes(officialClaudeCodePreview, "ANTHROPIC_DEFAULT_HAIKU_MODEL");
+excludes(officialClaudeCodePreview, "[1m]");
+excludes(officialClaudeCodePreview, "ANTHROPIC_BASE_URL");
 
 const deepseekClaudePreviewWithUserOverrideOff = buildGatewayConfigPreview({
   ...baseCodexForm,
@@ -357,6 +405,19 @@ excludes(stableClaudePreview, "CLAUDE_CODE_DISABLE_AGENT_VIEW");
 excludes(stableClaudePreview, "DISABLE_AUTOUPDATER");
 excludes(stableClaudePreview, "skipWebFetchPreflight");
 
+const maxThinkingClaudePreview = buildGatewayConfigPreview({
+  ...baseCodexForm,
+  config_options: {
+    max_thinking: true,
+    skip_introduction: true,
+  } as unknown as AddForm["config_options"],
+});
+
+includes(maxThinkingClaudePreview, '"CLAUDE_CODE_EFFORT_LEVEL": "max"');
+includes(maxThinkingClaudePreview, '"alwaysThinkingEnabled": true');
+excludes(maxThinkingClaudePreview, '"effortLevel"');
+excludes(maxThinkingClaudePreview, '"skipIntroduction"');
+
 const bypassPermissionsClaudePreview = buildGatewayConfigPreview({
   ...baseCodexForm,
   display_name: "DeepSeek",
@@ -391,6 +452,32 @@ includes(directThirdPartyDesktopPreview, '"agentSwitchUpstreamBaseUrl": "https:/
 includes(directThirdPartyDesktopPreview, '"inferenceGatewayBaseUrl": "https://api.minimaxi.com/anthropic"');
 includes(directThirdPartyDesktopPreview, '"agentSwitchUpstreamModel": "MiniMax-M2.7"');
 
+const directAnthropicDesktopPreview = buildClaudeDesktopProfileConfigPreview({
+  ...baseCodexForm,
+  display_name: "Anthropic API",
+  compat_mode: "direct",
+  api_format: "anthropic",
+  auth_field: "ANTHROPIC_API_KEY",
+  base_url: "https://api.anthropic.com",
+  api_key: "sk-ant-test",
+  note: "Direct Anthropic API",
+  website_url: "https://console.anthropic.com",
+  model: "claude-fable-5",
+  model_map: defaultModelMap("claude-fable-5"),
+  provider_model_map: {
+    main: "claude-fable-5",
+    opus: "claude-opus-4-8",
+    sonnet: "claude-sonnet-5",
+    haiku: "claude-haiku-4-5-20251001",
+  },
+  models: ["claude-fable-5", "claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5-20251001"],
+});
+
+includes(directAnthropicDesktopPreview, '"inferenceProvider": "anthropic"');
+includes(directAnthropicDesktopPreview, '"inferenceAnthropicApiKey": "sk-ant-test"');
+includes(directAnthropicDesktopPreview, '"name": "claude-fable-5"');
+excludes(directAnthropicDesktopPreview, "inferenceGateway");
+
 const bypassPermissionsDesktopPreview = buildClaudeDesktopProfileConfigPreview({
   ...baseCodexForm,
   display_name: "MiniMax 套餐",
@@ -423,10 +510,8 @@ const officialPackageDesktopPreview = buildClaudeDesktopProfileConfigPreview({
 includes(officialPackageDesktopPreview, '"agentSwitchClient": "Claude Desktop"');
 includes(officialPackageDesktopPreview, '"agentSwitchRoute": "official"');
 includes(officialPackageDesktopPreview, '"agentSwitchOfficialAuth": "claude.ai"');
-includes(officialPackageDesktopPreview, '"name": "Fable5"');
-if (officialPackageDesktopPreview.includes("claude-opus-4-7")) {
-  throw new Error("Claude Desktop official package preview must use Fable5 as the visible model option");
-}
+excludes(officialPackageDesktopPreview, '"disableDeploymentModeChooser"');
+excludes(officialPackageDesktopPreview, '"inferenceModels"');
 if (/inferenceGateway(BaseUrl|ApiKey|AuthField|ApiFormat)/.test(officialPackageDesktopPreview)) {
   throw new Error("Claude Desktop official package preview must stay isolated from gateway/API fields");
 }

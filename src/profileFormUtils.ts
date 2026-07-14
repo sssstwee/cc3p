@@ -20,8 +20,8 @@ import {
   presetForProfile,
 } from "./profilePresetUtils.ts";
 import {
-  claudeDesktopOfficialModels,
-  claudeOfficialModelMap,
+  claudeDesktopGatewayModels,
+  claudeDesktopGatewayModelMap,
   vendorPresetApiFormatForTarget,
   vendorPresetAuthFieldForTarget,
   vendorPresetBaseUrlForTarget,
@@ -113,15 +113,15 @@ export function normalizeGatewayProfileForApply(
     next.api_format = gatewayFormApiFormat(profile.api_format, compatMode, preset, target);
     next.base_url = gatewayPresetUpstreamBaseUrl(preset, target);
     if (target === "claude_desktop") {
-      next.model_map = claudeOfficialModelMap;
+      next.model_map = claudeDesktopGatewayModelMap;
       next.provider_model_map = cloneModelMap(profile.provider_model_map ?? preset.model_map);
-      next.models = buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels);
+      next.models = buildGatewayModels(claudeDesktopGatewayModelMap, claudeDesktopGatewayModels);
       next.upstream_model = next.provider_model_map.main || next.upstream_model;
     }
   }
   if (target === "claude_desktop" && (!preset || preset.id.includes("anthropic"))) {
-    next.model_map = claudeOfficialModelMap;
-    next.models = buildGatewayModels(claudeOfficialModelMap, claudeDesktopOfficialModels);
+    next.model_map = claudeDesktopGatewayModelMap;
+    next.models = buildGatewayModels(claudeDesktopGatewayModelMap, claudeDesktopGatewayModels);
   }
   return next;
 }
@@ -170,7 +170,15 @@ export function cloneModelMap(modelMap: ModelMap | undefined, fallback = ""): Mo
   };
 }
 
-const codexProxyModelSlots = new Set(["gpt-5.5", "gpt-5.4-mini", "gpt-5.3-codex", "gpt-5.4", "gpt-5.2"]);
+const codexProxyModelSlots = new Set([
+  "gpt-5.6-sol",
+  "gpt-5.6-terra",
+  "gpt-5.6-luna",
+  "gpt-5.5",
+  "gpt-5.4",
+  "gpt-5.4-mini",
+  "gpt-5.3-codex-spark",
+]);
 
 function isCodexProxyModelSlot(model: string) {
   return codexProxyModelSlots.has(model.trim().toLowerCase());

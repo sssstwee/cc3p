@@ -41,7 +41,7 @@ export function buildEnvCheckCards(
       emptyEnvCheckCard("claude_cli", "Claude Code", "命令行", "/target-icons/claude-code.svg", claudeCliEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
       emptyEnvCheckCard("claude_desktop", "Claude Desktop", "桌面端", "/target-icons/claude.svg", claudeDesktopEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
       emptyEnvCheckCard("codex_cli", "Codex CLI", "命令行", "/target-icons/codex.svg", codexEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
-      emptyEnvCheckCard("codex_desktop", "Codex Desktop", "桌面端", "/target-icons/codex.svg", codexEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
+      emptyEnvCheckCard("codex_desktop", "ChatGPT（Codex）", "桌面端", "/target-icons/codex.svg", codexEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
       emptyEnvCheckCard("hermes", "Hermes Agent", "命令行", "/target-icons/hermes.png", hermesEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
       emptyEnvCheckCard("opencode", "OpenCode", "命令行", "/target-icons/opencode.png", opencodeEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
       emptyEnvCheckCard("oh_my_opencode", "Oh My OpenAgent", "增强", "/target-icons/oh-my-openagent.svg", ohMyOpenCodeEnvConfigLabel(currentEnvPlatform), currentEnvPlatform),
@@ -108,7 +108,7 @@ export function buildEnvCheckCards(
     },
     {
       key: "codex_desktop",
-      title: "Codex Desktop",
+      title: "ChatGPT（Codex）",
       badge: "桌面端",
       logo: "/target-icons/codex.svg",
       installed: envResults.codex_desktop_installed,
@@ -119,7 +119,7 @@ export function buildEnvCheckCards(
       ...envCardLaunch("codex_desktop", currentEnvPlatform),
       configLabel: codexEnvConfigLabel(currentEnvPlatform),
       configExists: envResults.codex_config_exists,
-      hint: "请自行前往 OpenAI 官网下载并安装 Codex Desktop；该目标会读取本机 Codex 桌面端应用。",
+      hint: "请安装最新版 ChatGPT；Codex 桌面功能已集成在 ChatGPT 中。",
       installations: [],
       locations: envResults.codex_desktop_apps,
       configs: envResults.codex_configs,
@@ -277,7 +277,7 @@ function envCardLaunch(
     case "codex_cli":
       return { launchCommand: "codex", launchArgs: [] };
     case "codex_desktop":
-      if (platform === "macos") return { launchCommand: "open", launchArgs: ["-a", "Codex"] };
+      if (platform === "macos") return { launchCommand: "open", launchArgs: ["-b", "com.openai.codex"] };
       if (platform === "windows") return { launchCommand: "Codex.exe", launchArgs: [] };
       return { launchCommand: "codex", launchArgs: [] };
     case "opencode":

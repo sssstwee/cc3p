@@ -43,6 +43,7 @@ import {
   mergeCodexConfigOptionsIntoToml,
   normalizeCodexConfigOptions,
 } from "./codexConfig.ts";
+import type { CodexOssProvider } from "./codexConfig.ts";
 import {
   ENV_CHECK_ERROR_VISIBLE_MS,
   remainingEnvCheckVisibleDelay,
@@ -105,8 +106,9 @@ import {
 } from "./gatewayConfigOptions.ts";
 import {
   allVendorPresets,
-  claudeDesktopOfficialModels,
-  claudeOfficialModelMap,
+  claudeApiModels,
+  claudeDesktopGatewayModels,
+  claudeDesktopGatewayModelMap,
   customPreset,
   vendorPresetApiFormatForTarget,
   vendorPresetAuthFieldForTarget,
@@ -1559,7 +1561,7 @@ function App() {
       hide_think_blocks: true,
       supports_1m_context: true,
       codex_config_options: { ...defaultCodexConfigOptions },
-      model_map: targetKey === "claude_desktop" ? claudeOfficialModelMap : preset.model_map,
+      model_map: targetKey === "claude_desktop" ? claudeDesktopGatewayModelMap : preset.model_map,
       provider_model_map: preset.model_map,
       models: preset.models,
       config_options: isCodexTarget(targetKey)
@@ -1611,7 +1613,7 @@ function App() {
     const normalizedForm = target === "claude_desktop"
       ? {
           ...nextForm,
-          model_map: claudeOfficialModelMap,
+          model_map: claudeDesktopGatewayModelMap,
         }
       : nextForm;
     const savedCodexExtraModels = "connection_mode" in profile && profile.connection_mode !== "official"
@@ -1711,7 +1713,7 @@ function App() {
         hide_think_blocks: true,
         supports_1m_context: true,
         codex_config_options: { ...defaultCodexConfigOptions },
-        model_map: target === "claude_desktop" ? claudeOfficialModelMap : preset.model_map,
+        model_map: target === "claude_desktop" ? claudeDesktopGatewayModelMap : preset.model_map,
         provider_model_map: preset.model_map,
         models: preset.models,
         config_options: withRecommendedGatewayConfigOptions({ ...defaultGatewayConfigOptions }, preset),
@@ -1740,7 +1742,7 @@ function App() {
   }
 
   function officialCodexFormFromProfile(profile: CodexProfile): AddForm {
-    const model = profile.model || extractTomlAssignment(profile.config_toml, "model") || "gpt-5.5";
+    const model = profile.model || extractTomlAssignment(profile.config_toml, "model") || "gpt-5.6-sol";
     return {
       display_name: profile.display_name,
       website_url: profile.website_url,
@@ -1854,7 +1856,7 @@ function App() {
     }
 
     const name = formForSubmit.display_name.trim() || `${targetDisplayName(target)} ${Date.now().toString().slice(-4)}`;
-    const resolvedDesktopModelMap = target === "claude_desktop" ? claudeOfficialModelMap : formForSubmit.model_map;
+    const resolvedDesktopModelMap = target === "claude_desktop" ? claudeDesktopGatewayModelMap : formForSubmit.model_map;
     const resolvedProviderModelMap = providerModelMapFallback(formForSubmit, currentSelectedPreset, target);
     const resolvedGatewayUpstreamModel =
       target === "claude_desktop"
@@ -1869,7 +1871,10 @@ function App() {
         : "proxy";
       const codexFormForSubmit = formForSubmit.connection_mode === "official"
         ? formForSubmit
-        : { ...formForSubmit, compat_mode: submittedCompatMode };
+        : {
+            ...formForSubmit,
+            compat_mode: submittedCompatMode,
+          };
       const resolvedToml = codexFormForSubmit.connection_mode === "official"
         ? mergeCodexConfigOptionsIntoToml(
             mergeCodexOfficialModelIntoToml(codexFormForSubmit.config_toml, codexFormForSubmit.model),
@@ -1883,8 +1888,8 @@ function App() {
             codexFormForSubmit.compat_mode === "proxy",
           );
       const resolvedModel = codexFormForSubmit.connection_mode === "official"
-        ? (codexFormForSubmit.model || extractTomlAssignment(resolvedToml, "model") || codexFormForSubmit.model_map.main || "gpt-5.5")
-        : (codexFormForSubmit.model || codexFormForSubmit.model_map.main || "gpt-5.5");
+        ? (codexFormForSubmit.model || extractTomlAssignment(resolvedToml, "model") || codexFormForSubmit.model_map.main || "gpt-5.6-sol")
+        : (codexFormForSubmit.model || codexFormForSubmit.model_map.main || "gpt-5.6-sol");
       const profileId = isEditMode
         ? editingProfile!.id
         : crypto.randomUUID();
@@ -1911,9 +1916,7 @@ function App() {
         model_catalog_json: catalogJson,
         hide_think_blocks: codexFormForSubmit.connection_mode === "official" ? false : codexFormForSubmit.hide_think_blocks,
         supports_1m_context: codexFormForSubmit.connection_mode === "official" ? false : Boolean(codexFormForSubmit.supports_1m_context),
-        codex_config_options: codexFormForSubmit.connection_mode === "official"
-          ? sanitizeCodexConfigOptionsForForm(codexFormForSubmit, currentSelectedPreset)
-          : sanitizeCodexConfigOptionsForForm(codexFormForSubmit, currentSelectedPreset),
+        codex_config_options: sanitizeCodexConfigOptionsForForm(codexFormForSubmit, currentSelectedPreset),
         updated_at: Date.now(),
       };
       nextState = {
@@ -1940,10 +1943,10 @@ function App() {
         : buildGatewayModels(
             resolvedDesktopModelMap,
             target === "claude_desktop"
-              ? claudeDesktopOfficialModels
+              ? claudeDesktopGatewayModels
               : selectedPreset
                 ? (allVendorPresets.find((p) => p.id === selectedPreset)?.models ?? [])
-                : ["claude-opus-4-7", "claude-sonnet-4-6"],
+                : claudeApiModels,
             formForSubmit.supports_1m_context,
           );
       const profile: GatewayProfile = {
@@ -2505,7 +2508,7 @@ function App() {
         modelDiscoveryBusy={modelDiscoveryBusy}
         modelDiscoveryEndpoint={modelDiscoveryEndpoint}
         providerModelCandidates={providerModelCandidates}
-        placeholder={currentSelectedPreset?.model_map.main || currentSelectedPreset?.models[0] || "gpt-5.5"}
+        placeholder={currentSelectedPreset?.model_map.main || currentSelectedPreset?.models[0] || "gpt-5.6-sol"}
         onDiscover={() => void handleDiscoverProviderModels()}
         onChange={(nextModel) => setAddForm((form) => formWithSelectedProviderModel(form, nextModel))}
         onSelectCandidate={(model) => setAddForm((form) => formWithSelectedProviderModel(form, model))}
@@ -2522,7 +2525,7 @@ function App() {
 
   function renderOfficialCodexModelField() {
     if (!isOfficialCodexDirect) return null;
-    const value = addForm.model || addForm.model_map.main || "gpt-5.5";
+    const value = addForm.model || addForm.model_map.main || "gpt-5.6-sol";
     const handleModelChange = (nextModel: string) => {
       setAddForm((form) => ({
         ...form,
@@ -2535,7 +2538,7 @@ function App() {
     return (
       <OfficialCodexModelField
         value={value}
-        placeholder={currentSelectedPreset?.model_map.main || "gpt-5.5"}
+        placeholder={currentSelectedPreset?.model_map.main || "gpt-5.6-sol"}
         providerModelCandidates={providerModelCandidates}
         onChange={handleModelChange}
         onSelectCandidate={handleModelChange}
@@ -2644,6 +2647,15 @@ function App() {
             },
           })
         }
+        onCodexOssProviderChange={(value: CodexOssProvider) =>
+          setAddForm({
+            ...addForm,
+            codex_config_options: {
+              ...addForm.codex_config_options,
+              oss_provider: value,
+            },
+          })
+        }
         onImportOfficialProfile={() => void handleImportOfficialCodexProfileToForm()}
         onApplyRecommended={applyRecommendedCodexOptions}
       />
@@ -2747,10 +2759,12 @@ function App() {
 	  }
 	  const envCardUninstallPath = (item: (typeof envCheckCards)[number]) =>
     item.installations.find((record) => record.primary)?.path ||
-    item.locations.find((record) => record.is_primary && record.exists)?.path ||
+    item.locations.find(
+      (record) => record.is_primary && record.exists && record.label !== "ChatGPT.app",
+    )?.path ||
     item.installations.find((record) => Boolean(record.path))?.path ||
-    item.locations.find((record) => record.exists)?.path ||
-    (item.installed ? item.path : "");
+    item.locations.find((record) => record.exists && record.label !== "ChatGPT.app")?.path ||
+    (item.installed && item.key !== "codex_desktop" ? item.path : "");
 
   const appStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
@@ -3042,17 +3056,15 @@ function App() {
               {isOfficialCodexDirect ? (
                 <>
                   <div className="ccr-note-box">
-                    OpenAI 套餐模式使用本机 Codex 官方登录态；这里不填写 API Key 或 Base URL。
-                    官方登录配置是可选增强；没有官方账号时仍可只保存和应用三方配置。
-                    Free 账号可用 GPT-5.5 但有较低限额；如果最新模型不可用或额度耗尽，可把默认模型切到 gpt-5.4-mini、gpt-5.4、gpt-5.3-codex 或 gpt-5.2 兜底。
-                    官方返回的账号、额度或模型不可用错误会透传到 Codex 对话界面，便于区分账号限制和本地网关问题。
-                    如需刷新官方登录产生的 auth.json/config.toml，请在下方“官方登录配置”里同步。
+                    <div>使用本机 Codex 官方登录，无需填写 API Key 或 Base URL；没有官方账号时可直接使用三方配置。</div>
+                    <div>模型是否可用，以当前 ChatGPT 套餐、额度和 Codex 模型菜单为准。</div>
+                    <div>需要刷新 auth.json 或 config.toml 时，请在下方“官方登录配置”中同步。</div>
                   </div>
                   {renderOfficialCodexModelField()}
                 </>
               ) : isAnthropicPackageDirect ? (
                 <div className="ccr-note-box">
-                  Anthropic 套餐模式会移除 `ANTHROPIC_BASE_URL`、`ANTHROPIC_AUTH_TOKEN` 与桌面端网关字段；Claude Code 写回 `~/.claude/settings.json`，Claude Desktop 写回独立的 `Claude-3p/configLibrary` 官方配置文件。
+                  使用本机 Claude 官方登录，无需填写 API Key 或 Base URL。应用后会清除 Switch++ 的网关覆盖，让 Claude Code / Claude Desktop 恢复官方连接。
                 </div>
               ) : isDesktopTarget ? (
                 <>
@@ -3283,12 +3295,12 @@ function App() {
                   <div className="ccr-model-map-head">
                     <div>
                       <div className="ccr-advanced-title">模型映射</div>
-                      <p>{addForm.compat_mode === "proxy" ? "桌面端发 Claude 官方模型名，本地兼容网关会转到厂商真实模型。" : "桌面端固定使用 Claude 官方模型名称。"}</p>
+                      <p>{addForm.compat_mode === "proxy" ? "桌面端发送 Switch++ 网关模型别名，本地兼容网关会转到厂商真实模型。" : "桌面端使用当前 profile 中声明的模型名称。"}</p>
                     </div>
                   </div>
                   {addForm.compat_mode === "proxy" ? (
                     <div className="ccr-note-box">
-                      左侧是 Claude Desktop 实际发送的官方模型名；右侧填写这类请求要转发到的厂商真实模型。
+                      左侧是 Claude Desktop profile 的模型别名；右侧填写这类请求要转发到的厂商真实模型。
                     </div>
                   ) : null}
                   {addForm.compat_mode === "proxy" ? renderModelDiscoveryField("主上游模型") : null}
@@ -4646,7 +4658,7 @@ function App() {
                               </div>
                               {codexProfile.connection_mode === "official" ? (
                                 <div className="ccr-note-box">
-                                  官方账号配置使用本机 Codex 登录态；不要在这里填写三方 Base URL 或 API Key。没有官方账号时可跳过此配置，只使用三方 provider。默认模型会写回 config.toml；若 GPT-5.5 不可用，可改为 gpt-5.4-mini、gpt-5.4、gpt-5.3-codex 或 gpt-5.2。
+                                  使用本机 Codex 官方登录，无需填写 API Key 或 Base URL；默认模型写入 config.toml，可用性以当前 Codex 模型菜单、ChatGPT 套餐和额度为准。
                                 </div>
                               ) : (
                                 <>
@@ -4694,7 +4706,7 @@ function App() {
                               <div className="ccr-edit-field">
                                 <label>{codexProfile.connection_mode === "official" ? "默认模型" : "上游模型"}</label>
                                 <Input
-                                  placeholder="gpt-5.5"
+                                  placeholder="gpt-5.6-sol"
                                   value={codexProfile.model}
                                   onChange={(e) =>
                                     updateCodexProfile(profile.id, {
@@ -4822,7 +4834,7 @@ function App() {
                                 <div key={`${model.name}-${modelIdx}`} className="ccr-model-row">
                                   <Input
                                     aria-label={targetUsesAppConfigFields(target) ? `${targetDisplayName(target)} 可用模型 ${modelIdx + 1}` : `模型 ${modelIdx + 1}`}
-                                    placeholder={targetUsesAppConfigFields(target) ? gp.upstream_model || gp.model_map.main || "qwen3.7-max" : "claude-opus-4-7"}
+                                    placeholder={targetUsesAppConfigFields(target) ? gp.upstream_model || gp.model_map.main || "qwen3.7-max" : "claude-fable-5"}
                                     value={model.name}
                                     onChange={(e) =>
                                       updateModel(profile.id, modelIdx, { name: e.currentTarget.value })

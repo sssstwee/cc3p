@@ -283,7 +283,7 @@ function requiredGatewayDetail(target: TargetKey, profile: CodexProfile | Gatewa
       return "当前问题：最新版 Claude Code 直连该厂商 Anthropic 兼容端点实测失败，需要通过 Switch++ 本地网关完成模型映射、请求清洗、工具 schema 压缩和兼容转发。";
     }
     if (target === "claude_desktop" && !isOfficialAnthropicBaseUrl(profile.base_url)) {
-      return "当前问题：Claude Desktop 使用 Claude 官方模型名，第三方 Anthropic 上游不经过本地网关时模型映射不可控，可能落到默认模型或失败。开启收益：Switch++ 接管模型别名映射、请求预检、调用记录和工具 schema 压缩。";
+      return "当前问题：Claude Desktop profile 的模型别名与第三方 Anthropic 上游真实模型不一定一致，直连时可能落到默认模型或失败。开启收益：Switch++ 接管模型别名映射、请求预检、调用记录和工具 schema 压缩。";
     }
   }
 
@@ -318,7 +318,7 @@ function directGatewayDetail(target: TargetKey, profile: CodexProfile | GatewayP
 
   if (target === "codex" && isCodexProfile(profile)) {
     if (profile.connection_mode === "official") {
-      return "OpenAI 套餐走 Codex 官方登录与配置路径，Switch++ 不接管模型，也不提供本地网关开关。需要网关调用记录时请切换到三方配置。";
+      return "OpenAI 套餐直连 Codex 官方服务，不经过 Switch++ 网关；调用记录仅适用于三方网关配置。";
     }
     return "当前 Codex 配置可直接连接厂商 Responses 地址，不需要 Switch++ 本地网关。";
   }

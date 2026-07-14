@@ -1,6 +1,9 @@
 import type { RecommendationAdvice } from "./configRecommendations.ts";
 
 const codexConfigReferenceUrl = "https://developers.openai.com/codex/config-reference";
+const codexModelsUrl = "https://developers.openai.com/codex/models";
+
+export type CodexOssProvider = "" | "ollama" | "lmstudio";
 
 export type CodexConfigOptions = {
   high_reasoning: boolean;
@@ -20,14 +23,14 @@ export type CodexConfigOptions = {
   workspace_network_access: boolean;
   enable_memories: boolean;
   enable_goals: boolean;
-  enable_undo: boolean;
   prevent_idle_sleep: boolean;
   disable_feedback: boolean;
   disable_paste_burst: boolean;
   disable_commit_attribution: boolean;
+  oss_provider: CodexOssProvider;
 };
 
-export type CodexConfigOptionKey = keyof CodexConfigOptions;
+export type CodexConfigOptionKey = Exclude<keyof CodexConfigOptions, "oss_provider">;
 
 export type CodexConfigOptionItem = {
   key: CodexConfigOptionKey;
@@ -46,7 +49,7 @@ export type CodexConfigOptionSupport = RecommendationAdvice & {
 };
 
 export const defaultCodexConfigOptions: CodexConfigOptions = {
-  high_reasoning: true,
+  high_reasoning: false,
   detailed_reasoning_summary: false,
   force_reasoning_summaries: false,
   low_verbosity: false,
@@ -63,11 +66,11 @@ export const defaultCodexConfigOptions: CodexConfigOptions = {
   workspace_network_access: false,
   enable_memories: false,
   enable_goals: true,
-  enable_undo: false,
   prevent_idle_sleep: false,
   disable_feedback: false,
   disable_paste_burst: false,
   disable_commit_attribution: false,
+  oss_provider: "",
 };
 
 const allCodexConfigOptionItems: CodexConfigOptionItem[] = [
@@ -174,12 +177,6 @@ const allCodexConfigOptionItems: CodexConfigOptionItem[] = [
     configPath: "features.goals",
   },
   {
-    key: "enable_undo",
-    label: "启用 Undo",
-    description: "写入 [features].undo = true，启用 Codex undo 支持。",
-    configPath: "features.undo",
-  },
-  {
     key: "prevent_idle_sleep",
     label: "防止运行时休眠",
     description: "写入 [features].prevent_idle_sleep = true，任务运行时阻止系统进入睡眠。",
@@ -228,11 +225,17 @@ export const codexConfigOptionItems: CodexConfigOptionItem[] = allCodexConfigOpt
   (option) => !hiddenCodexConfigOptionKeys.has(option.key),
 );
 
+export function normalizeCodexOssProvider(value: unknown): CodexOssProvider {
+  return value === "ollama" || value === "lmstudio" ? value : "";
+}
+
 export function normalizeCodexConfigOptions(options?: Partial<CodexConfigOptions>): CodexConfigOptions {
-  return withoutHiddenCodexConfigOptions({
+  const next = withoutHiddenCodexConfigOptions({
     ...defaultCodexConfigOptions,
     ...options,
   });
+  next.oss_provider = normalizeCodexOssProvider(next.oss_provider);
+  return next;
 }
 
 export function buildCodexConfigOptionTomlParts(options: CodexConfigOptions) {
@@ -247,6 +250,7 @@ export function buildCodexConfigOptionTomlParts(options: CodexConfigOptions) {
   if (safeOptions.low_verbosity) topLevelLines.push('model_verbosity = "low"');
   if (safeOptions.show_raw_reasoning) topLevelLines.push("show_raw_agent_reasoning = true");
   if (safeOptions.enable_web_search) topLevelLines.push('web_search = "live"');
+  if (safeOptions.oss_provider) topLevelLines.push(`oss_provider = "${safeOptions.oss_provider}"`);
   if (safeOptions.disable_websockets) providerLines.push("supports_websockets = false");
 
   if (safeOptions.inline_tui || safeOptions.disable_tui_animations) {
@@ -257,11 +261,10 @@ export function buildCodexConfigOptionTomlParts(options: CodexConfigOptions) {
   if (safeOptions.workspace_network_access) {
     sectionLines.push("", "[sandbox_workspace_write]", "network_access = true");
   }
-  if (safeOptions.enable_memories || safeOptions.enable_goals || safeOptions.enable_undo || safeOptions.prevent_idle_sleep) {
+  if (safeOptions.enable_memories || safeOptions.enable_goals || safeOptions.prevent_idle_sleep) {
     sectionLines.push("", "[features]");
     if (safeOptions.enable_memories) sectionLines.push("memories = true");
     if (safeOptions.enable_goals) sectionLines.push("goals = true");
-    if (safeOptions.enable_undo) sectionLines.push("undo = true");
     if (safeOptions.prevent_idle_sleep) sectionLines.push("prevent_idle_sleep = true");
   }
 
@@ -361,6 +364,24 @@ function removeManagedCodexTomlLines(lines: string[], activeProviderId: string |
   return next;
 }
 
+function removeTopLevelTomlAssignment(lines: string[], keyToRemove: string) {
+  const next: string[] = [];
+  let currentSection = "";
+
+  for (const line of lines) {
+    const sectionName = tomlSectionName(line);
+    if (sectionName) {
+      currentSection = sectionName;
+      next.push(line);
+      continue;
+    }
+    if (!currentSection && tomlAssignmentKey(line) === keyToRemove) continue;
+    next.push(line);
+  }
+
+  return next;
+}
+
 function insertTopLevelTomlLines(lines: string[], topLevelLines: string[]) {
   if (topLevelLines.length === 0) return lines;
   const firstSectionIndex = lines.findIndex((line) => Boolean(tomlSectionName(line)));
@@ -405,6 +426,7 @@ export function mergeCodexConfigOptionsIntoToml(toml: string, options: CodexConf
   const originalLines = normalizedToml ? normalizedToml.split("\n") : [];
   const activeProvider = activeModelProviderId(originalLines);
   let lines = removeManagedCodexTomlLines(originalLines, activeProvider);
+  lines = removeTopLevelTomlAssignment(lines, "oss_provider");
 
   lines = insertTopLevelTomlLines(lines, optionParts.topLevelLines);
   if (
@@ -432,6 +454,7 @@ export function getCodexConfigOptionSupport(
   },
 ): CodexConfigOptionSupport {
   const isGpt5 = /(^|[/:-])gpt-5/i.test(context.model);
+  const prefersModelDefaultReasoning = /(^|[/:-])gpt-5\.6-(sol|terra|luna)$/i.test(context.model);
   const usesNativeResponses = context.connectionMode === "official" || context.compatMode === "direct";
   const presetName = context.presetName || "当前厂商";
   const confirmedOpenAiResponses = context.connectionMode === "official" || context.presetId === "openai" || context.presetId === "openai-package";
@@ -565,6 +588,19 @@ export function getCodexConfigOptionSupport(
 
   if (option.key === "high_reasoning") {
     if (usesNativeResponses && isGpt5 && confirmedOpenAiResponses) {
+      if (prefersModelDefaultReasoning) {
+        return {
+          supported: true,
+          statusText: "按需勾选",
+          tone: "warn",
+          recommendation: "按需勾选：GPT-5.6 Codex 模型已有各自默认推理强度，常规任务建议先沿用模型默认值。",
+          detail: "不勾选时不写 model_reasoning_effort；遇到复杂任务时再显式切到 high，可避免新配置长期强制高推理开销。",
+          source: {
+            label: "Codex 官方模型目录",
+            url: codexModelsUrl,
+          },
+        };
+      }
       return {
         supported: true,
         statusText: "建议勾选",

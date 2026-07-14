@@ -52,7 +52,7 @@ test("public branding uses Switch++ naming", () => {
   const docs = readSource("../docs/index.html");
   const appConstants = readSource("./appConstants.ts");
 
-  assert.equal(packageJson.name, "switchpp");
+  assert.equal(packageJson.name, "switch-plus-plus");
   assert.equal(tauriConfig.productName, "Switch++");
   assert.equal(tauriConfig.mainBinaryName, "Switch++");
   assert.equal(tauriConfig.bundle.macOS.bundleName, "Switch++");
@@ -62,8 +62,9 @@ test("public branding uses Switch++ naming", () => {
   assert.deepEqual(tauriConfig.bundle.resources, ["icons/32x32.png", "icons/tray-template.png"]);
   assert.match(cargoToml, /features = \["macos-private-api", "tray-icon", "image-png"\]/);
   assert.equal(packageJson.scripts.dev, 'PATH="$HOME/.cargo/bin:$PATH" tauri dev --runner ../scripts/tauri-dev-runner.sh');
-  assert.match(cargoToml, /^name = "switchpp"$/m);
+  assert.match(cargoToml, /^name = "switch-plus-plus"$/m);
   assert.match(cargoToml, /^name = "agent_switch_lib"$/m);
+  assert.equal(readSource("../scripts/tauri-dev-runner.sh").includes('source_binary="$binary_dir/switch-plus-plus"'), true);
   assert.equal(packageJson.homepage, "https://sssstwee.github.io/switch-plus-plus/");
   assert.equal(packageJson.repository.url, "https://github.com/sssstwee/switch-plus-plus.git");
   assert.equal(packageJson.keywords.includes("claude-code"), true);

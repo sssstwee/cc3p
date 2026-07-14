@@ -50,14 +50,14 @@ equal(officialCodexProfileForLocalSync([gatewayOnly, official])?.id, "official-p
 const emptyAddForm = createEmptyAddForm();
 equal(emptyAddForm.hide_think_blocks, true);
 equal(emptyAddForm.supports_1m_context, true);
-equal(openaiPackagePreset.models.includes("gpt-5.4-mini"), true);
-equal(openaiPackagePreset.models.includes("gpt-5.3-codex"), true);
+equal(openaiPackagePreset.models.includes("gpt-5.6-sol"), true);
+equal(openaiPackagePreset.models.includes("gpt-5.6-terra"), true);
 
 const codexProxySlotProfile = codexProfile({
   id: "codex-proxy-slot-profile",
   display_name: "DeepSeek",
   compat_mode: "proxy",
-  model: "gpt-5.5",
+  model: "gpt-5.6-sol",
   models: ["deepseek-v4-pro", "deepseek-v4-flash"],
 });
 equal(formFromProfile(codexProxySlotProfile, null, "codex").model, "deepseek-v4-pro");

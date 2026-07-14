@@ -38,6 +38,7 @@ function excludes<T>(haystack: T[], needle: T) {
 
 const parts = buildCodexConfigOptionTomlParts({
   ...defaultCodexConfigOptions,
+  high_reasoning: true,
   detailed_reasoning_summary: true,
   force_reasoning_summaries: true,
   low_verbosity: true,
@@ -49,12 +50,12 @@ const parts = buildCodexConfigOptionTomlParts({
   workspace_network_access: true,
   enable_memories: true,
   enable_goals: true,
-  enable_undo: true,
   prevent_idle_sleep: true,
   disable_feedback: true,
   disable_paste_burst: true,
   disable_commit_attribution: true,
   disable_websockets: true,
+  oss_provider: "ollama",
 });
 
 includes(parts.topLevelLines, 'model_reasoning_effort = "high"');
@@ -63,6 +64,7 @@ includes(parts.topLevelLines, "model_supports_reasoning_summaries = true");
 includes(parts.topLevelLines, 'model_verbosity = "low"');
 includes(parts.topLevelLines, "show_raw_agent_reasoning = true");
 includes(parts.topLevelLines, 'web_search = "live"');
+includes(parts.topLevelLines, 'oss_provider = "ollama"');
 excludes(parts.topLevelLines, "disable_paste_burst = true");
 excludes(parts.topLevelLines, 'commit_attribution = ""');
 excludes(parts.topLevelLines, "disable_response_storage = true");
@@ -78,7 +80,7 @@ includes(parts.sectionLines, "network_access = true");
 includes(parts.sectionLines, "[features]");
 includes(parts.sectionLines, "memories = true");
 includes(parts.sectionLines, "goals = true");
-includes(parts.sectionLines, "undo = true");
+excludes(parts.sectionLines, "undo = true");
 includes(parts.sectionLines, "prevent_idle_sleep = true");
 excludes(parts.sectionLines, "[feedback]");
 excludes(parts.sectionLines, "enabled = false");
@@ -181,7 +183,7 @@ if (!disableWebsocketsOption) {
 equal(disableWebsocketsOption.label, "关闭 WebSockets");
 equal(disableWebsocketsOption.configPath, "model_providers.<id>.supports_websockets");
 const officialDisableWebsocketsSupport = getCodexConfigOptionSupport(disableWebsocketsOption, {
-  model: "gpt-5.5",
+  model: "gpt-5.6-sol",
   compatMode: "direct",
   connectionMode: "official",
   presetId: "openai-package",
@@ -204,11 +206,14 @@ if (!enableGoalsOption) {
 }
 equal(enableGoalsOption.label, "启用 Goal");
 equal(enableGoalsOption.configPath, "features.goals");
+equal(codexConfigOptionItems.map((option) => String(option.key)).includes("enable_undo"), false);
 equal(defaultCodexConfigOptions.enable_goals, true);
+equal(defaultCodexConfigOptions.high_reasoning, false);
 equal(defaultCodexConfigOptions.disable_response_storage, false);
 equal(defaultCodexConfigOptions.disable_history, false);
 equal(defaultCodexConfigOptions.disable_update_check, false);
 equal(defaultCodexConfigOptions.disable_websockets, false);
+equal(defaultCodexConfigOptions.oss_provider, "");
 
 const recommendedCodexOptions = recommendedCodexConfigOptionsForForm({
   display_name: "MiniMax",
@@ -251,7 +256,7 @@ const openAiRecommendedCodexOptions = recommendedCodexConfigOptionsForForm({
   api_format: "openai_responses",
   auth_field: "OPENAI_API_KEY",
   use_full_url: false,
-  model: "gpt-5.5",
+  model: "gpt-5.6-sol",
   auth_json: "",
   config_toml: "",
   hide_think_blocks: false,
@@ -261,14 +266,15 @@ const openAiRecommendedCodexOptions = recommendedCodexConfigOptionsForForm({
     enable_web_search: true,
     workspace_network_access: true,
   },
-  model_map: defaultModelMap("gpt-5.5"),
-  provider_model_map: defaultModelMap("gpt-5.5"),
-  models: ["gpt-5.5"],
+  model_map: defaultModelMap("gpt-5.6-sol"),
+  provider_model_map: defaultModelMap("gpt-5.6-sol"),
+  models: ["gpt-5.6-sol"],
   config_options: { ...defaultGatewayConfigOptions },
 } satisfies AddForm, allVendorPresets.find((preset) => preset.id === "openai") ?? null);
 equal(openAiRecommendedCodexOptions.detailed_reasoning_summary, true);
 equal(openAiRecommendedCodexOptions.enable_web_search, true);
 equal(openAiRecommendedCodexOptions.workspace_network_access, true);
+equal(openAiRecommendedCodexOptions.high_reasoning, false);
 equal(openAiRecommendedCodexOptions.disable_response_storage, false);
 equal(openAiRecommendedCodexOptions.disable_websockets, false);
 
@@ -316,14 +322,14 @@ const recommendedDesktopOptions = withRecommendedGatewayTargetConfigOptions(
   deepseekPreset,
   false,
 );
-equal(recommendedDesktopOptions.enable_stream_watchdog, true);
+equal(recommendedDesktopOptions.enable_stream_watchdog, false);
 equal(recommendedDesktopOptions.api_timeout_long, true);
 equal(recommendedDesktopOptions.disable_telemetry, true);
 equal(recommendedDesktopOptions.disable_nonessential_traffic, true);
 equal(recommendedDesktopOptions.enable_tool_search, false);
 equal(recommendedDesktopOptions.auto_compact, false);
 equal(recommendedDesktopOptions.compact_early, false);
-equal(recommendedDesktopOptions.skip_introduction, true);
+equal("skip_introduction" in recommendedDesktopOptions, false);
 
 const desktopOptionKeys = configOptionItemsForTarget("claude_desktop", false).map((option) => option.key);
 equal(desktopOptionKeys.length, recommendedClaudeDesktopConfigOptionKeys.size);
@@ -432,3 +438,22 @@ includes(mergedProviderWebsocketToml.split("\n"), 'model_provider = "custom"');
 includes(mergedProviderWebsocketToml.split("\n"), "[model_providers.custom]");
 includes(mergedProviderWebsocketToml.split("\n"), "supports_websockets = false");
 excludes(mergedProviderWebsocketToml.split("\n").slice(0, 4), "supports_websockets = false");
+
+const mergedOssProviderToml = mergeCodexConfigOptionsIntoToml(
+  [
+    'model = "gpt-5.5"',
+    'oss_provider = "ollama"',
+  ].join("\n"),
+  { ...defaultCodexConfigOptions, oss_provider: "lmstudio" },
+);
+includes(mergedOssProviderToml.split("\n"), 'oss_provider = "lmstudio"');
+equal((mergedOssProviderToml.match(/oss_provider/g) ?? []).length, 1);
+
+const clearedOssProviderToml = mergeCodexConfigOptionsIntoToml(
+  [
+    'model = "gpt-5.5"',
+    'oss_provider = "ollama"',
+  ].join("\n"),
+  { ...defaultCodexConfigOptions, oss_provider: "" },
+);
+excludes(clearedOssProviderToml.split("\n"), 'oss_provider = "ollama"');
