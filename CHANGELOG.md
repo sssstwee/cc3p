@@ -11,6 +11,7 @@ Switch++ 小版本更新。本次重点修复上游应用、模型和配置项�
 - 更新厂商预设、模型发现和配置预览，让保存后的真实配置与界面候选保持一致，并补充对应回归测试。 / Updated vendor presets, model discovery, and configuration previews so saved output matches UI candidates, with regression coverage added.
 - 环境检查现在识别当前 `ChatGPT.app` 中的 Codex 桌面能力，同时保留旧版 `Codex.app` 检测，并避免把 ChatGPT 误列为 Codex 卸载目标。 / Environment checks now recognize Codex desktop capabilities in `ChatGPT.app`, retain legacy `Codex.app` detection, and avoid offering ChatGPT as a Codex uninstall target.
 - 统一前端包、Rust crate 与开发二进制名称为 `switch-plus-plus`，避免开发启动脚本查找旧二进制名。 / Unified the frontend package, Rust crate, and development binary name as `switch-plus-plus` to prevent the dev runner from looking for the obsolete binary name.
+- 精简发布流水线，仅构建 Apple Silicon（M 系列）macOS 的 `.dmg` 与签名更新包，移除 Intel macOS、Windows 和 Linux 打包任务。 / Streamlined the release pipeline to build only Apple Silicon macOS `.dmg` and signed updater artifacts, removing Intel macOS, Windows, and Linux packaging jobs.
 
 ### 界面预览 / Screenshots
 
