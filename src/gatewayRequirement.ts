@@ -1,5 +1,9 @@
 import type { CodexProfile, GatewayProfile, TargetKey, VendorPreset } from "./appTypes.ts";
-import { gatewayProfileUsesProxyForTarget, isOfficialAnthropicBaseUrl } from "./gatewayProfile.ts";
+import {
+  gatewayProfileUsesProxyForTarget,
+  isOfficialAnthropicBaseUrl,
+  isSubscriptionProxyBaseUrl,
+} from "./gatewayProfile.ts";
 
 export type GatewayRequirementLevel = "required" | "recommended" | "none";
 
@@ -163,16 +167,16 @@ function gatewayCapabilityLimitation(target: TargetKey, profile: CodexProfile | 
       return "仍有限制：Codex 官方账号或 OpenAI Responses 路径按官方能力工作；Switch++ 不介入模型能力，也不会改变 Codex 自身的图片、文件或工具支持边界。";
     }
     if (kind === "deepseek") {
-      return "仍有限制：DeepSeek 当前 Codex 路径通过本地网关把 Codex 请求适配到 DeepSeek Chat Completions；图片、文档等输入能力取决于 DeepSeek 对当前模型和请求格式的支持，本地网关不能补齐上游模型能力。";
+      return "仍有限制：DeepSeek 官方 Responses API 当前仅支持 deepseek-v4-flash；图片/文件输入、previous_response_id 和服务端会话状态暂不支持。";
     }
     if (kind === "minimax") {
-      return "仍有限制：MiniMax 官方编码工具文档以 M2.7 为主，图片理解需要额外 Image Understanding MCP；Codex 经过本地网关后可完成协议适配和记录，但不会把 M2.7 变成视觉模型。";
+      return "仍有限制：MiniMax M3 原生支持图片和视频，但 Codex 经本地网关接入时仍受 Codex 请求格式、内容块映射、模型大小和计费限制。";
     }
     if (kind === "zai") {
-      return "仍有限制：Z.ai/智谱 Codex 路径依赖本地网关适配到 Chat Completions；GLM-5.1 文档主打编码和代理任务，视觉能力需 Vision MCP 或视觉模型，不由本地网关补齐。";
+      return "仍有限制：Z.ai/智谱 Codex 路径依赖本地网关适配到 Chat Completions；GLM-5.2 文档主打编码和代理任务，视觉能力需 Vision MCP 或视觉模型，不由本地网关补齐。";
     }
     if (kind === "kimi-code") {
-      return "仍有限制：Kimi Code 路径面向第三方 Coding Agent 的 kimi-for-coding；Codex 经本地网关后可适配请求，但图片/视频能力未作为该 Coding Agent 路径的稳定能力声明。";
+      return "仍有限制：Kimi Code 路径提供 K3 / K2.7 Code；图片和视频能力仍取决于所选模型、请求格式和套餐权限。";
     }
     if (kind === "kimi") {
       return "仍有限制：Kimi K2.6 官方文档说明最新模型支持图片和视频输入；Codex 经本地网关适配时仍受 Codex 请求格式、内容块映射、模型大小和计费限制。";
@@ -181,7 +185,7 @@ function gatewayCapabilityLimitation(target: TargetKey, profile: CodexProfile | 
       return "仍有限制：阿里百炼 Codex 按量路径支持 Responses；图片/视频能力仍取决于是否选择千问 VL 等多模态模型，默认文本或代码模型不会因为本地网关获得视觉能力。";
     }
     if (kind === "siliconflow") {
-      return "仍有限制：硅基流动 Codex 路径经本地网关连接上游；只有 VLM 模型处理图片，当前 Qwen3-Coder 等代码模型仍按文本模型工作。";
+      return "仍有限制：硅基流动 Codex 路径经本地网关连接上游；只有 VLM 模型处理图片，当前 GLM-5.2 等文本模型仍按文本模型工作。";
     }
     if (kind === "openrouter") {
       return "仍有限制：OpenRouter 按模型声明 input_modalities；Codex 的厂商连接或本地网关都不会改变所选模型是否支持 image/file 输入。";
@@ -200,13 +204,13 @@ function gatewayCapabilityLimitation(target: TargetKey, profile: CodexProfile | 
       return "仍有限制：DeepSeek 官方 Anthropic 兼容表标注 image、document、search_result 内容块不支持；开启本地网关后可做模型映射、预检和记录，但不能让 DeepSeek 获得图片或文档理解能力。";
     }
     if (kind === "minimax") {
-      return "仍有限制：MiniMax 官方 Claude Code 文档使用 M2.7，并提示图片理解需要额外配置 Image Understanding MCP；本地网关只处理连接、模型映射和请求预检，不会把 M2.7 文本/代码模型变成视觉模型。";
+      return "仍有限制：MiniMax M3 原生支持图片和视频，但能力仍取决于 Claude 请求内容和 MiniMax 兼容端点；本地网关不能绕过格式、大小和计费限制。";
     }
     if (kind === "zai") {
-      return "仍有限制：Z.ai/智谱 Claude Code 文档将 GLM-5.1 定位为编码模型，并把视觉能力放在 Vision MCP；本地网关可降低模型映射和配置问题，但不能替代视觉 MCP 或让非视觉模型读取图片。";
+      return "仍有限制：Z.ai/智谱 Claude Code 文档将 GLM-5.2 定位为编码模型，并把视觉能力放在 Vision MCP；本地网关可降低模型映射和配置问题，但不能替代视觉 MCP 或让非视觉模型读取图片。";
     }
     if (kind === "kimi-code") {
-      return "仍有限制：Kimi Code 文档要求第三方 Coding Agent 使用 kimi-for-coding；图片/视频能力未作为该 Claude Code 接入路径的稳定能力声明，本地网关不会补齐上游未开放的多模态能力。";
+      return "仍有限制：Kimi Code 路径提供 K3 / K2.7 Code；图片和视频能力仍取决于所选模型、请求格式和套餐权限。";
     }
     if (kind === "kimi") {
       return "仍有限制：Kimi K2.6 文档说明最新模型支持图片和视频输入，但能力依赖 Kimi API 的多模态请求格式；本地网关只能保留/转发兼容内容块，不能绕过模型格式、大小和计费限制。";
@@ -215,7 +219,7 @@ function gatewayCapabilityLimitation(target: TargetKey, profile: CodexProfile | 
       return "仍有限制：阿里百炼 Anthropic 兼容接口列出千问 VL 模型和多模态示例；图片/视频能力取决于所选上游模型，非 VL 文本或代码模型不会因为开启本地网关而获得视觉能力。";
     }
     if (kind === "siliconflow") {
-      return "仍有限制：硅基流动文档说明只有 VLM 模型可处理图片；当前预设的 Qwen3-Coder 等代码/文本模型仍按文本模型处理，本地网关不会自动切换到视觉模型。";
+      return "仍有限制：硅基流动文档说明只有 VLM 模型可处理图片；当前预设的 GLM-5.2 等文本模型仍按文本模型处理，本地网关不会自动切换到视觉模型。";
     }
     if (kind === "openrouter") {
       return "仍有限制：OpenRouter 按模型声明 input_modalities；只有带 image/file 等输入模态的模型能处理图片或文档，本地网关不会改变所选模型的模态能力。";
@@ -246,7 +250,9 @@ export function profileRequiresGateway(target: TargetKey, profile: CodexProfile 
   if (isVerifiedClaudeAnthropicDirectProfile(target, profile)) return false;
   if (isBlockedClaudeAnthropicDirectProfile(target, profile)) return true;
   if (target === "claude_cli") {
-    return profile.api_format === "openai_chat" || profile.api_format === "openai_responses";
+    return profile.compat_mode === "proxy"
+      || profile.api_format === "openai_chat"
+      || profile.api_format === "openai_responses";
   }
   return gatewayProfileUsesProxyForTarget(profile, target);
 }
@@ -273,6 +279,9 @@ function requiredGatewayDetail(target: TargetKey, profile: CodexProfile | Gatewa
   }
 
   if (!isCodexProfile(profile)) {
+    if (isSubscriptionProxyBaseUrl(profile.base_url)) {
+      return "当前配置需要通过 Switch++ 本地兼容网关连接内置 CLIProxyAPI；网关负责应用隔离、模型映射、认证转发和调用记录。";
+    }
     if (profile.api_format === "openai_chat" || profile.api_format === "openai_responses") {
       return "当前问题：Claude 客户端发送 Claude 兼容请求，但当前上游不能直接接收该请求，绕过本地网关会协议不匹配。开启收益：Switch++ 负责协议适配、模型映射、认证隔离和调用记录。";
     }

@@ -375,6 +375,7 @@ function targetLabel(target: TargetKey) {
   if (target === "oh_my_opencode") return "Oh My OpenAgent";
   if (target === "openclaw") return "OpenClaw";
   if (target === "hermes") return "Hermes Agent";
+  if (target === "grok_build") return "Grok Build";
   if (target === "pi") return "Pi Coding Agent";
   if (target === "oh_my_pi") return "Oh My Pi";
   if (target === "claude_desktop") return "Claude Desktop";
@@ -409,7 +410,7 @@ export const sourceReferences: Record<
     url: "https://openrouter.ai/docs/guides/coding-agents/claude-code-integration",
   },
   minimax: {
-    label: "MiniMax 官方 M2.7 for AI Coding Tools 说明",
+    label: "MiniMax 官方 M3 / AI Coding Tools 说明",
     url: "https://platform.minimax.io/docs/guides/text-ai-coding-tools",
   },
   deepseek: {
@@ -941,7 +942,7 @@ export function configOptionItemsForTarget(target: TargetKey, isOfficialAnthropi
   if (target === "opencode") return opencodeConfigOptionItems;
   if (target === "openclaw") return openclawConfigOptionItems;
   if (target === "hermes") return hermesConfigOptionItems;
-  if (["antigravity", "oh_my_opencode", "pi", "oh_my_pi"].includes(target)) return [];
+  if (["grok_build", "antigravity", "oh_my_opencode", "pi", "oh_my_pi"].includes(target)) return [];
   if (target === "claude_desktop") {
     return gatewayConfigOptionItems.filter((option) => recommendedClaudeDesktopConfigOptionKeys.has(option.key));
   }

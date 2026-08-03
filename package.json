@@ -3,7 +3,7 @@
   "private": true,
   "description": "Switch++ brings third-party models into Claude Code, Claude Desktop, Codex CLI, and Codex Desktop with config switching, local gateway routing, and call observability.",
   "license": "SEE LICENSE IN LICENSE",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "type": "module",
   "homepage": "https://sssstwee.github.io/switch-plus-plus/",
   "repository": {
@@ -64,7 +64,8 @@
   "scripts": {
     "dev": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri dev --runner ../scripts/tauri-dev-runner.sh",
     "dev:web": "vite",
-    "build": "tsc && vite build",
+    "prepare:cliproxyapi": "node scripts/prepare-cliproxyapi-sidecar.mjs",
+    "build": "pnpm prepare:cliproxyapi && tsc && vite build",
     "lint": "tsc --noEmit && pnpm lint:rust && pnpm fmt:rust",
     "test": "node scripts/run-tests.mjs",
     "test:rust": "PATH=\"$HOME/.cargo/bin:$PATH\" cargo test --manifest-path src-tauri/Cargo.toml",

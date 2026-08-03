@@ -44,6 +44,7 @@ export function targetDisplayName(target: TargetKey) {
 
 export function supportsNativeApply(target: TargetKey) {
   return target === "claude_cli" || target === "claude_desktop" || target === "codex"
+    || target === "grok_build"
     || target === "opencode" || target === "oh_my_opencode" || target === "openclaw"
     || target === "hermes" || target === "pi" || target === "oh_my_pi";
 }

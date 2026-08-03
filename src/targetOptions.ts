@@ -35,6 +35,16 @@ export const targetOptions: TargetMeta[] = [
     badge: "桌面端",
   },
   {
+    key: "grok_build",
+    title: "Grok Build",
+    summary: "Grok Build 三方模型配置管理",
+    description: "维护 Grok Build 自定义模型端点，并写入 ~/.grok/config.toml。",
+    configFileLabel: "Grok Build 配置文件",
+    configFilePath: "~/.grok/config.toml",
+    logo: "/target-icons/grok.svg",
+    badge: "命令行",
+  },
+  {
     key: "hermes",
     title: "Hermes Agent",
     summary: "Hermes Agent CLI/Desktop 厂商配置管理",

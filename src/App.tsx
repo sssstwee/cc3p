@@ -73,6 +73,7 @@ import type {
   GatewayProfile,
   LicenseActivationStatus,
   ModelMap,
+  SubscriptionProxyStatus,
   TargetKey,
   VendorPreset,
 } from "./appTypes.ts";
@@ -162,8 +163,13 @@ import {
   extractTomlAssignment,
   isAsciiHeaderValue,
   isOfficialAnthropicBaseUrl,
+  isSubscriptionProxyBaseUrl,
   validateProviderModelMap,
 } from "./gatewayProfile.ts";
+import {
+  isSubscriptionProxyProfileId,
+  syncSubscriptionProxyProfiles,
+} from "./subscriptionProxyConfig.ts";
 import { useEnvCheckStore } from "./store/useEnvCheckStore.ts";
 import { useGatewayStore } from "./store/useGatewayStore.ts";
 
@@ -204,6 +210,9 @@ import { useShellUiStore } from "./store/useShellUiStore.ts";
 
 const CodexMemoryView = lazy(() => import("./CodexMemoryView.tsx"));
 const McpSkillsView = lazy(() => import("./McpSkillsView.tsx"));
+const SubscriptionProxyView = lazy(
+  () => import("./features/subscription-proxy/SubscriptionProxyView.tsx"),
+);
 function envCheckCardSortIndex(key: string) {
   const index = ENV_CHECK_CARD_ORDER.indexOf(key as EnvCheckCardKey);
   return index >= 0 ? index : ENV_CHECK_CARD_ORDER.length;
@@ -231,7 +240,88 @@ function extraCodexModelsFromProfile(profile: CodexProfile, primaryModel: string
 }
 
 function targetUsesAppConfigFields(target: TargetKey) {
-  return ["opencode", "oh_my_opencode", "openclaw", "hermes", "pi", "oh_my_pi"].includes(target);
+  return ["grok_build", "opencode", "oh_my_opencode", "openclaw", "hermes", "pi", "oh_my_pi"].includes(target);
+}
+
+function appStateWithSubscriptionProxyProfiles(
+  currentState: AppState,
+  status: SubscriptionProxyStatus,
+  preferredModel = "",
+) {
+  const sync = {
+    claude_cli: syncSubscriptionProxyProfiles(
+      currentState.claude_cli,
+      currentState.applied.claude_cli,
+      status,
+      "claude_cli",
+      preferredModel,
+    ),
+    claude_desktop: syncSubscriptionProxyProfiles(
+      currentState.claude_desktop,
+      currentState.applied.claude_desktop,
+      status,
+      "claude_desktop",
+      preferredModel,
+    ),
+    grok_build: syncSubscriptionProxyProfiles(
+      currentState.grok_build,
+      currentState.applied.grok_build,
+      status,
+      "grok_build",
+      preferredModel,
+    ),
+  };
+  if (Object.values(sync).every((result) => result.action === "unchanged")) {
+    return { nextState: currentState, sync };
+  }
+  return {
+    nextState: {
+      ...currentState,
+      claude_cli: sync.claude_cli.profiles,
+      claude_desktop: sync.claude_desktop.profiles,
+      grok_build: sync.grok_build.profiles,
+      applied: {
+        ...currentState.applied,
+        claude_cli: sync.claude_cli.appliedProfileId,
+        claude_desktop: sync.claude_desktop.appliedProfileId,
+        grok_build: sync.grok_build.appliedProfileId,
+      },
+    },
+    sync,
+  };
+}
+
+const subscriptionProxyTargets = [
+  "claude_cli",
+  "claude_desktop",
+  "grok_build",
+] as const;
+
+async function saveAndReapplySubscriptionProxyProfiles(
+  synced: ReturnType<typeof appStateWithSubscriptionProxyProfiles>,
+) {
+  let next = await nativeApi.saveAppState(synced.nextState);
+  for (const target of subscriptionProxyTargets) {
+    const result = synced.sync[target];
+    const profileId = result.appliedProfileId;
+    if (
+      result.action === "unchanged"
+      || result.action === "removed"
+      || !profileId
+      || !isSubscriptionProxyProfileId(profileId, target)
+    ) {
+      continue;
+    }
+    const stateForApply = {
+      ...next,
+      [target]: next[target].map((profile) =>
+        profile.id === profileId
+          ? normalizeGatewayProfileForApply(profile, target)
+          : profile),
+    };
+    next = await nativeApi.applyTargetProfile(target, profileId, stateForApply);
+  }
+  return next;
 }
 
 function App() {
@@ -633,6 +723,30 @@ function App() {
   const currentProfiles = useMemo(() => {
     return profilesForTarget(state, target);
   }, [state, target]);
+  const subscriptionProxySyncedApplications = useMemo(() => {
+    if (!state) return [];
+    return [
+      {
+        name: "Claude Code",
+        profiles: state.claude_cli,
+        target: "claude_cli" as const,
+      },
+      {
+        name: "Claude Desktop",
+        profiles: state.claude_desktop,
+        target: "claude_desktop" as const,
+      },
+      {
+        name: "Grok Build",
+        profiles: state.grok_build,
+        target: "grok_build" as const,
+      },
+    ]
+      .filter(({ profiles, target: profileTarget }) =>
+        profiles.some((profile) =>
+          isSubscriptionProxyProfileId(profile.id, profileTarget)))
+      .map(({ name }) => name);
+  }, [state]);
   const presetFamilies = useMemo(() => buildPresetFamilies(target), [target]);
   const currentSelectedPreset = useMemo(() => selectedPresetById(selectedPreset), [selectedPreset]);
   const currentPresetFamily = currentSelectedPreset
@@ -1215,7 +1329,19 @@ function App() {
   async function loadState() {
     setBusy(true);
     try {
-      const next = await nativeApi.loadAppState();
+      let next = await nativeApi.loadAppState();
+      try {
+        const proxyStatus = await nativeApi.subscriptionProxyStatus();
+        const synced = appStateWithSubscriptionProxyProfiles(next, proxyStatus);
+        if (
+          Object.values(synced.sync)
+            .some((result) => result.action !== "unchanged")
+        ) {
+          next = await saveAndReapplySubscriptionProxyProfiles(synced);
+        }
+      } catch (syncError) {
+        showStatus(`订阅代理配置同步失败：${String(syncError)}`, "error");
+      }
       setState(next);
       setStateLoadError("");
       void loadCodexProxyStatus();
@@ -1605,6 +1731,51 @@ function App() {
     setView("list");
   }
 
+  async function syncSubscriptionProxyAppProfiles(
+    proxyStatus: SubscriptionProxyStatus,
+    preferredModel = "",
+  ) {
+    if (!state) {
+      throw new Error("应用配置尚未加载，请刷新后重试。");
+    }
+
+    if (proxyStatus.running && preferredModel.trim()) {
+      await nativeApi.configureSubscriptionProxyModel(preferredModel);
+    }
+
+    const synced = appStateWithSubscriptionProxyProfiles(
+      state,
+      proxyStatus,
+      preferredModel,
+    );
+    const syncResults = Object.values(synced.sync);
+    if (syncResults.every((result) => result.action === "unchanged")) return;
+
+    setBusy(true);
+    try {
+      const saved = await saveAndReapplySubscriptionProxyProfiles(synced);
+      setState(saved);
+      if (syncResults.some((result) => result.clearedAppliedProfile)) {
+        showStatus(
+          "订阅代理已停止，已应用的自动配置已移除；请在对应应用中应用其他配置后再使用。",
+          "error",
+        );
+      } else if (syncResults.some((result) => result.action === "removed")) {
+        showStatus("订阅代理配置已从应用配置列表自动移除。", "success");
+      } else {
+        showStatus(
+          "订阅代理配置已自动同步到 Claude Code、Claude Desktop 与 Grok Build。",
+          "success",
+        );
+      }
+    } catch (error) {
+      showStatus(`订阅代理配置同步失败：${String(error)}`, "error");
+      throw error;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function openEditView(profile: GatewayProfile | CodexProfile) {
     if (!guardLicensedNavigation()) return;
     if (!state || currentTargetMeta.disabled) return;
@@ -1866,9 +2037,8 @@ function App() {
     if (isCodexTarget(target)) {
       const key = target;
       const submittedCompatMode: CodexCompatMode = formForSubmit.connection_mode === "official"
-        || formForSubmit.base_url.trim().toLowerCase().includes("api.openai.com")
         ? "direct"
-        : "proxy";
+        : formForSubmit.compat_mode;
       const codexFormForSubmit = formForSubmit.connection_mode === "official"
         ? formForSubmit
         : {
@@ -1934,7 +2104,11 @@ function App() {
       const resolvedConfigOptions = supportsNativeApply(target)
         ? formForSubmit.config_options
         : { ...formForSubmit.config_options, write_general_config: false };
-      const submittedCompatMode: CodexCompatMode = isOfficialAnthropicBaseUrl(formForSubmit.base_url) ? "direct" : "proxy";
+      const submittedCompatMode: CodexCompatMode =
+        isOfficialAnthropicBaseUrl(formForSubmit.base_url)
+        || isSubscriptionProxyBaseUrl(formForSubmit.base_url)
+          ? "direct"
+          : "proxy";
       const resolvedGatewayModels = targetUsesAppConfigFields(target)
         ? uniqueModelNames([resolvedGatewayUpstreamModel, ...formForSubmit.models]).map((name) => ({
             name,
@@ -2398,11 +2572,13 @@ function App() {
       )
     : buildCodexConfigTomlTemplate(addForm, currentSelectedPreset);
   const targetConfigEditorLabel =
-    target === "hermes" || target === "oh_my_pi"
-      ? "配置 YAML"
-      : target === "openclaw"
-        ? "配置 JSON5"
-        : "配置 JSON";
+    target === "grok_build"
+      ? "配置 TOML"
+      : target === "hermes" || target === "oh_my_pi"
+        ? "配置 YAML"
+        : target === "openclaw"
+          ? "配置 JSON5"
+          : "配置 JSON";
   const targetConfigOptionsLabel = isClaudeGatewayTarget(target)
     ? target === "claude_desktop"
       ? "Claude Desktop 选项"
@@ -2440,6 +2616,8 @@ function App() {
         ? "该地址会写入 OpenCode provider；如果已经配置 Oh My OpenAgent，也会同步刷新它的 agents/categories 路由。"
       : target === "oh_my_opencode"
         ? "该地址会同步写入 OpenCode provider；Oh My OpenAgent 自身只保存 agents/categories 路由。"
+      : target === "grok_build"
+        ? "该地址会写入 Grok Build 的自定义模型配置，并作为当前默认模型端点。"
       : addForm.api_format === "anthropic"
         ? "Claude Code 可直接使用 Anthropic 兼容地址；开启本地网关后可获得记录、预检和统一启停。"
         : "该地址只作为 Switch++ 上游地址保存；Claude Code 会请求本地网关。";
@@ -2451,6 +2629,8 @@ function App() {
     ? "自定义配置不会假定协议兼容性；请按模型厂商与目标 agent 官方文档选择 API 格式、认证字段和 Base URL。"
     : target === "opencode"
       ? "OpenCode 会写入 opencode.json 的 provider/model/small_model；如果已有 Oh My OpenAgent 配置上下文，应用 OpenCode 时会同步刷新 Oh My OpenAgent 路由，避免两个入口各自指向不同模型。"
+      : target === "grok_build"
+        ? "Grok Build 会在 ~/.grok/config.toml 中写入 Switch++ 管理的自定义模型，并更新 models.default；其他用户设置、注释和非 Switch++ 模型会保留。"
       : target === "oh_my_opencode"
         ? "Oh My OpenAgent 是 OpenCode 插件增强配置；会写入 oh-my-openagent.json 的 agents/categories 模型路由，并同步 OpenCode provider 配置。两个页面都使用 opencode 启动入口，后应用的配置会成为共同生效配置。"
         : target === "openclaw"
@@ -2815,6 +2995,11 @@ function App() {
           setView("memory");
           setEditingId(null);
         }}
+        onSubscriptionProxyView={() => {
+          if (!guardLicensedNavigation()) return;
+          setView("subscription_proxy");
+          setEditingId(null);
+        }}
         onLanguageChange={setLanguage}
         onSettingsBackdropClick={() => setSettingsPopoverOpen(false)}
         onSettingsToggle={toggleSettingsPopover}
@@ -2832,6 +3017,8 @@ function App() {
         className={
           view === "gateway"
             ? "ccr-main ccr-main-gateway"
+            : view === "subscription_proxy"
+              ? "ccr-main ccr-main-subscription-proxy"
             : view === "env"
               ? "ccr-main ccr-main-env"
               : view === "memory"
@@ -3690,6 +3877,17 @@ function App() {
           onOverviewBucketChange={setCodexProxyOverviewBucket}
           onExpandedCallIdChange={setCodexProxyExpandedCallId}
         />
+
+        ) : effectiveView === "subscription_proxy" ? (
+
+        /* ═══ Local subscription proxy view ═══ */
+        <Suspense fallback={<div className="ccr-loading-center">加载中...</div>}>
+          <SubscriptionProxyView
+            language={language}
+            onProxyStatusChange={syncSubscriptionProxyAppProfiles}
+            syncedApplications={subscriptionProxySyncedApplications}
+          />
+        </Suspense>
 
         ) : effectiveView === "mcp" ? (
 

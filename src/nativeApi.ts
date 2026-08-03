@@ -16,6 +16,7 @@ import type {
   ModelDiscoveryResult,
   RestartAppResult,
   SkillData,
+  SubscriptionProxyStatus,
   TargetKey,
 } from "./appTypes.ts";
 import { invokeNative, nativeCommand } from "./nativeIpc.ts";
@@ -72,6 +73,16 @@ export const nativeApi = {
     invokeNative<CodexProxyStatus>(nativeCommand.stopCodexProxy, { target }),
   clearCodexProxyRecords: (target: ProxyTargetKey) =>
     invokeNative<CodexProxyStatus>(nativeCommand.clearCodexProxyRecords, { target }),
+  subscriptionProxyStatus: () =>
+    invokeNative<SubscriptionProxyStatus>(nativeCommand.subscriptionProxyStatus),
+  loginSubscriptionProxyCodex: () =>
+    invokeNative<SubscriptionProxyStatus>(nativeCommand.loginSubscriptionProxyCodex),
+  startSubscriptionProxy: () =>
+    invokeNative<SubscriptionProxyStatus>(nativeCommand.startSubscriptionProxy),
+  stopSubscriptionProxy: () =>
+    invokeNative<SubscriptionProxyStatus>(nativeCommand.stopSubscriptionProxy),
+  configureSubscriptionProxyModel: (model: string) =>
+    invokeNative<void>(nativeCommand.configureSubscriptionProxyModel, { model }),
   loadLicenseStatus: () =>
     invokeNative<LicenseActivationStatus>(nativeCommand.loadLicenseStatus),
   activateLicenseCode: (code: string) =>

@@ -458,6 +458,21 @@ export function getCodexConfigOptionSupport(
   const usesNativeResponses = context.connectionMode === "official" || context.compatMode === "direct";
   const presetName = context.presetName || "当前厂商";
   const confirmedOpenAiResponses = context.connectionMode === "official" || context.presetId === "openai" || context.presetId === "openai-package";
+  const isDeepSeekResponses = context.presetId === "deepseek" && context.compatMode === "direct";
+
+  if (option.key === "high_reasoning" && isDeepSeekResponses) {
+    return {
+      supported: true,
+      statusText: "建议勾选",
+      tone: "ok",
+      recommendation: "建议勾选：DeepSeek 官方 Codex 配置默认使用 high 推理强度。",
+      detail: '该项写入 model_reasoning_effort = "high"，与 DeepSeek V4-Flash 官方 Codex 示例一致。',
+      source: {
+        label: "DeepSeek 官方 Codex 集成文档",
+        url: "https://api-docs.deepseek.com/quick_start/agent_integrations/codex",
+      },
+    };
+  }
 
   if (hiddenCodexConfigOptionKeys.has(option.key)) {
     return {

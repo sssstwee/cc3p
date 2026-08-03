@@ -51,4 +51,5 @@ docs/superpowers/
 # Build artifacts & generated files
 src-tauri/target/
 src-tauri/gen/
+src-tauri/binaries/cliproxyapi-*
 .codegraph/

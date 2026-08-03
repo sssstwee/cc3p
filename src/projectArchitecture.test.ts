@@ -13,8 +13,8 @@ const privateCoreTestOptions = hasPrivateCore ? {} : { skip: "requires-private-c
 test("targetOptions module exports expected values", async () => {
   const mod = await import("./targetOptions.ts");
   assert.equal(Array.isArray(mod.targetOptions), true);
-  assert.equal(mod.targetOptions.length, 10);
-  assert.equal(mod.visibleTargetOptions.length, 9);
+  assert.equal(mod.targetOptions.length, 11);
+  assert.equal(mod.visibleTargetOptions.length, 10);
   assert.equal(typeof mod.claudeDesktopConfigPathLabel, "string");
 });
 
@@ -25,6 +25,61 @@ test("target metadata stays independent from icon components", () => {
   assert.equal(targetOptions.includes("@phosphor-icons/react"), false);
   assert.equal(targetOptions.includes("icon:"), false);
   assert.equal(existsSync(targetIconsUrl), true);
+});
+
+test("subscription proxy is exposed as a local-only CLIProxyAPI tool", privateCoreTestOptions, () => {
+  const app = readSource("./App.tsx");
+  const appSidebar = readSource("./features/app-shell/AppSidebar.tsx");
+  const nativeIpc = readSource("./nativeIpc.ts");
+  const proxyView = readSource("./features/subscription-proxy/SubscriptionProxyView.tsx");
+  const proxyConfig = readSource("./subscriptionProxyConfig.ts");
+  const privateCore = readSource("../.private/agent-switch-private-core/src-tauri-core/src/lib.rs");
+  const privateModule = readSource("../.private/agent-switch-private-core/src-tauri-core/src/subscription_proxy.rs");
+  const packageJson = JSON.parse(readSource("../package.json"));
+  const prepareSidecar = readSource("../scripts/prepare-cliproxyapi-sidecar.mjs");
+  const releaseWorkflow = readSource("../.github/workflows/release.yml");
+  const tauriConfig = JSON.parse(readSource("../src-tauri/tauri.conf.json"));
+
+  assert.equal(appSidebar.includes("订阅代理"), true);
+  assert.equal(nativeIpc.includes('subscriptionProxyStatus: "subscription_proxy_status"'), true);
+  assert.equal(nativeIpc.includes("installSubscriptionProxy"), false);
+  assert.equal(nativeIpc.includes('loginSubscriptionProxyCodex: "login_subscription_proxy_codex"'), true);
+  assert.equal(nativeIpc.includes('startSubscriptionProxy: "start_subscription_proxy"'), true);
+  assert.equal(nativeIpc.includes('stopSubscriptionProxy: "stop_subscription_proxy"'), true);
+  assert.deepEqual(tauriConfig.bundle.externalBin, ["binaries/cliproxyapi"]);
+  assert.equal(tauriConfig.bundle.resources.includes("third-party/CLIProxyAPI-LICENSE.txt"), true);
+  assert.equal(packageJson.scripts["prepare:cliproxyapi"], "node scripts/prepare-cliproxyapi-sidecar.mjs");
+  assert.equal(prepareSidecar.includes('const VERSION = "7.2.102"'), true);
+  assert.equal(prepareSidecar.includes("f0bc5990a9f519bb211e87a6bf16d82096ab84735c40ed94ac42eafc38fe373d"), true);
+  assert.equal(prepareSidecar.includes("router-for-me/CLIProxyAPI/releases/download"), true);
+  assert.equal(releaseWorkflow.includes("CLIPROXYAPI_TARGET: aarch64-apple-darwin"), true);
+  assert.equal(proxyView.includes("安装 CLIProxyAPI"), false);
+  assert.equal(proxyView.includes("已内置"), true);
+  assert.equal(proxyView.includes("已同步应用"), true);
+  assert.equal(proxyView.includes("Codex 与 ChatGPT 应用保持各自官方登录和配置，不同步、也不经过此网关。"), true);
+  assert.equal(proxyView.includes('type ConnectionFieldKey = "apiKey" | "baseUrl" | "model"'), true);
+  assert.equal(proxyView.includes("添加到配置列表"), false);
+  assert.equal(proxyView.includes("复制启动命令"), false);
+  assert.equal(proxyConfig.includes("buildClaudeCodeLaunchCommand"), false);
+  assert.equal(proxyConfig.includes('"switchpp-chatgpt-subscription"'), true);
+  assert.equal(proxyConfig.includes("syncSubscriptionProxyProfiles"), true);
+  assert.equal(app.includes("currentState.claude_desktop"), true);
+  assert.equal(app.includes("currentState.grok_build"), true);
+  assert.equal(app.includes("onProxyStatusChange={syncSubscriptionProxyAppProfiles}"), true);
+  assert.equal(app.includes("syncedApplications={subscriptionProxySyncedApplications}"), true);
+  const subscriptionSyncStart = app.indexOf("function appStateWithSubscriptionProxyProfiles(");
+  const subscriptionSyncEnd = app.indexOf("\nfunction App()", subscriptionSyncStart);
+  const subscriptionSyncSource = app.slice(subscriptionSyncStart, subscriptionSyncEnd);
+  assert.equal(subscriptionSyncSource.includes("currentState.codex"), false);
+  assert.equal(privateCore.includes("is_subscription_proxy_profile"), true);
+  assert.equal(privateModule.includes("ProxyConfigScope::SubscriptionOpenAi"), true);
+  assert.equal(privateModule.includes("gateway_base_url"), true);
+  assert.equal(privateModule.includes('host: "127.0.0.1"'), true);
+  assert.equal(privateModule.includes("allow_remote: false"), true);
+  assert.equal(privateModule.includes("disable_control_panel: true"), true);
+  assert.equal(privateModule.includes("Homebrew"), false);
+  assert.equal(privateModule.includes("find_brew"), false);
+  assert.equal(privateModule.includes('.sidecar("cliproxyapi")'), true);
 });
 
 test("uiTranslation module exports expected functions", async () => {
@@ -59,7 +114,11 @@ test("public branding uses Switch++ naming", () => {
   assert.equal(tauriConfig.app.trayIcon.tooltip, "Switch++");
   assert.equal(tauriConfig.app.trayIcon.iconPath, "icons/tray-template.png");
   assert.equal(tauriConfig.app.trayIcon.iconAsTemplate, true);
-  assert.deepEqual(tauriConfig.bundle.resources, ["icons/32x32.png", "icons/tray-template.png"]);
+  assert.deepEqual(tauriConfig.bundle.resources, [
+    "icons/32x32.png",
+    "icons/tray-template.png",
+    "third-party/CLIProxyAPI-LICENSE.txt",
+  ]);
   assert.match(cargoToml, /features = \["macos-private-api", "tray-icon", "image-png"\]/);
   assert.equal(packageJson.scripts.dev, 'PATH="$HOME/.cargo/bin:$PATH" tauri dev --runner ../scripts/tauri-dev-runner.sh');
   assert.match(cargoToml, /^name = "switch-plus-plus"$/m);

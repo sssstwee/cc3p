@@ -285,6 +285,56 @@ function appProviderModelNames(form: AddForm) {
   return Array.from(new Set(names));
 }
 
+function grokBuildApiBackend(form: AddForm) {
+  if (form.api_format === "openai_responses") return "responses";
+  if (form.api_format === "anthropic") return "messages";
+  return "chat_completions";
+}
+
+function grokBuildModelAlias(index: number) {
+  return index === 0 ? "switchpp" : `switchpp-${index + 1}`;
+}
+
+export function buildGrokBuildConfigPreview(form: AddForm) {
+  const modelNames = appProviderModelNames(form);
+  const apiBackend = grokBuildApiBackend(form);
+  const contextWindow = form.supports_1m_context ? 1_000_000 : 200_000;
+  const lines = [
+    "[models]",
+    'default = "switchpp"',
+  ];
+
+  modelNames.forEach((model, index) => {
+    const alias = grokBuildModelAlias(index);
+    const displayName = index === 0
+      ? (form.display_name || model)
+      : `${form.display_name || "Switch++"} · ${model}`;
+    lines.push(
+      "",
+      `[model.${alias}]`,
+      `model = "${escapeTomlString(model)}"`,
+      `base_url = "${escapeTomlString(form.base_url)}"`,
+      `name = "${escapeTomlString(displayName)}"`,
+      `api_backend = "${apiBackend}"`,
+      `context_window = ${contextWindow}`,
+    );
+    if (form.note.trim()) {
+      lines.push(`description = "${escapeTomlString(form.note.trim())}"`);
+    }
+    if (form.api_key.trim()) {
+      if (form.api_format === "anthropic") {
+        lines.push(
+          `extra_headers = { "x-api-key" = "${escapeTomlString(form.api_key.trim())}", "anthropic-version" = "2023-06-01" }`,
+        );
+      } else {
+        lines.push(`api_key = "${escapeTomlString(form.api_key.trim())}"`);
+      }
+    }
+  });
+
+  return `${lines.join("\n")}\n`;
+}
+
 function hermesTitleGenerationModel(form: AddForm) {
   return form.model_map.sonnet.trim() || primaryGatewayModel(form);
 }
@@ -400,9 +450,17 @@ export function buildCodexModelCatalogPreview(form: AddForm, extraModels?: strin
   const allModels = codexCatalogModelEntries(form, extraModels);
 
   const catalogEntries = allModels.map(({ slug, displayName }, i) => {
-    const contextWindow = codexCatalogContextWindowForModel(form, displayName);
+    const isDeepSeekV4Responses = form.compat_mode === "direct"
+      && form.api_format === "openai_responses"
+      && form.base_url.toLowerCase().includes("api.deepseek.com")
+      && /^deepseek-v4-(flash|pro)$/i.test(displayName);
+    const contextWindow = isDeepSeekV4Responses
+      ? 1_048_576
+      : codexCatalogContextWindowForModel(form, displayName);
     const compactLimit = Math.max(8_000, Math.floor(contextWindow * 0.8));
-    const truncationLimit = Math.min(64_000, Math.max(8_000, Math.floor(contextWindow * 0.32)));
+    const truncationLimit = isDeepSeekV4Responses
+      ? 10_000
+      : Math.min(64_000, Math.max(8_000, Math.floor(contextWindow * 0.32)));
     return {
       slug,
       display_name: displayName,
@@ -413,30 +471,36 @@ export function buildCodexModelCatalogPreview(form: AddForm, extraModels?: strin
       wire_api: "responses",
       context_window: contextWindow,
       max_context_window: contextWindow,
-      auto_compact_token_limit: compactLimit,
+      auto_compact_token_limit: isDeepSeekV4Responses ? null : compactLimit,
       truncation_policy: { mode: "tokens", limit: truncationLimit },
-      default_reasoning_level: "medium",
-      supported_reasoning_levels: [
-        { effort: "low", description: "Faster, lighter reasoning" },
-        { effort: "medium", description: "Balanced speed and reasoning" },
-        { effort: "high", description: "Deeper reasoning" },
-        { effort: "xhigh", description: "Maximum reasoning where supported" },
-      ],
+      default_reasoning_level: isDeepSeekV4Responses ? "high" : "medium",
+      supported_reasoning_levels: isDeepSeekV4Responses
+        ? [
+            { effort: "low", description: "Fast responses with lighter reasoning" },
+            { effort: "high", description: "Extra high reasoning depth for complex problems" },
+            { effort: "max", description: "Maximum reasoning depth for the hardest problems" },
+          ]
+        : [
+            { effort: "low", description: "Faster, lighter reasoning" },
+            { effort: "medium", description: "Balanced speed and reasoning" },
+            { effort: "high", description: "Deeper reasoning" },
+            { effort: "xhigh", description: "Maximum reasoning where supported" },
+          ],
       default_reasoning_summary: "none",
-      reasoning_summary_format: "none",
+      reasoning_summary_format: isDeepSeekV4Responses ? "experimental" : "none",
       supports_reasoning_summaries: false,
       default_verbosity: "low",
-      support_verbosity: false,
+      support_verbosity: isDeepSeekV4Responses,
       apply_patch_tool_type: "freeform",
-      web_search_tool_type: "text_and_image",
-      supports_search_tool: false,
+      web_search_tool_type: isDeepSeekV4Responses ? "text" : "text_and_image",
+      supports_search_tool: isDeepSeekV4Responses,
       supports_parallel_tool_calls: true,
       experimental_supported_tools: [],
       input_modalities: ["text"],
       supports_image_detail_original: false,
       shell_type: "shell_command",
       visibility: "list",
-      minimal_client_version: "0.0.1",
+      minimal_client_version: isDeepSeekV4Responses ? "0.144.0" : "0.0.1",
       supported_in_api: true,
       availability_nux: null,
       upgrade: null,
@@ -449,6 +513,15 @@ export function buildCodexModelCatalogPreview(form: AddForm, extraModels?: strin
         instructions_template: "You are Codex running on {model_name} through Switch++. Be a helpful, direct coding collaborator.",
         instructions_variables: { model_name: displayName },
       },
+      ...(isDeepSeekV4Responses ? {
+        effective_context_window_percent: 95,
+        comp_hash: "3000",
+        tool_mode: null,
+        multi_agent_version: "v2",
+        use_responses_lite: false,
+        include_skills_usage_instructions: false,
+        auto_review_model_override: null,
+      } : {}),
     };
   });
 
@@ -485,6 +558,9 @@ export function buildCodexConfigTomlTemplate(form: AddForm, preset: VendorPreset
     `model_provider = "${escapeTomlString(providerId)}"`,
     `model = "${escapeTomlString(model)}"`,
     `model_catalog_json = "${escapeTomlString(codexModelCatalogPreviewPath())}"`,
+    ...(preset?.id === "deepseek" && form.compat_mode === "direct"
+      ? ['preferred_auth_method = "apikey"', 'forced_login_method = "api"']
+      : []),
     ...optionParts.topLevelLines,
     "",
     `[model_providers.${providerId}]`,
@@ -771,6 +847,7 @@ export function buildAntigravityConfigPreview() {
 }
 
 export function buildTargetConfigPreview(form: AddForm, target: TargetKey = "claude_cli") {
+  if (target === "grok_build") return buildGrokBuildConfigPreview(form);
   if (target === "opencode") return buildOpenCodeConfigPreview(form);
   if (target === "oh_my_opencode") return buildOhMyOpenCodeConfigPreview(form);
   if (target === "openclaw") return buildOpenClawConfigPreview(form);

@@ -7,6 +7,14 @@ export const defaultModelMap = (model: string): ModelMap => ({
   opus: model,
 });
 
+export const SUBSCRIPTION_PROXY_BASE_URL = "http://127.0.0.1:8317";
+
+export function isSubscriptionProxyBaseUrl(baseUrl: string) {
+  const normalized = baseUrl.trim().replace(/\/+$/, "").toLowerCase();
+  return normalized === SUBSCRIPTION_PROXY_BASE_URL
+    || normalized === `${SUBSCRIPTION_PROXY_BASE_URL}/v1`;
+}
+
 export function isModelMapEmpty(modelMap: ModelMap | null | undefined) {
   return !modelMap || Object.values(modelMap).every((model) => !model.trim());
 }

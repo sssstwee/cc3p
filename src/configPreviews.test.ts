@@ -6,6 +6,7 @@ import {
   buildCodexModelCatalogPreview,
   buildGatewayModels,
   buildGatewayConfigPreview,
+  buildGrokBuildConfigPreview,
   buildHermesConfigPreview,
   buildOhMyOpenCodeConfigPreview,
   buildOhMyPiConfigPreview,
@@ -15,7 +16,7 @@ import {
 } from "./configPreviews.ts";
 import { defaultCodexConfigOptions } from "./codexConfig.ts";
 import { defaultModelMap } from "./gatewayProfile.ts";
-import { customPreset } from "./vendorPresets.ts";
+import { allVendorPresets, customPreset } from "./vendorPresets.ts";
 
 function equal<T>(actual: T, expected: T) {
   if (actual !== expected) {
@@ -236,28 +237,67 @@ includes(
   equal(displayNames.join(","), "qwen3.6-plus,qwen3-coder-plus,qwen3.6-flash");
 }
 {
-  const deepseekCatalog = JSON.parse(buildCodexModelCatalogPreview({
+  const deepseekPreset = allVendorPresets.find((preset) => preset.id === "deepseek") ?? null;
+  const deepseekForm: AddForm = {
     ...baseCodexForm,
     display_name: "DeepSeek",
-    base_url: "https://api.deepseek.com/v1",
-    model: "deepseek-v4-pro",
-    model_map: defaultModelMap("deepseek-v4-pro"),
-    provider_model_map: defaultModelMap("deepseek-v4-pro"),
-  }));
-  const displayNames = (deepseekCatalog.models as Array<{ display_name: string }>).map((model) => model.display_name);
-  equal(displayNames.join(","), "deepseek-v4-pro");
+    compat_mode: "direct",
+    base_url: "https://api.deepseek.com",
+    model: "deepseek-v4-flash",
+    model_map: defaultModelMap("deepseek-v4-flash"),
+    provider_model_map: defaultModelMap("deepseek-v4-flash"),
+    models: ["deepseek-v4-flash", "deepseek-v4-pro"],
+    codex_config_options: { ...defaultCodexConfigOptions, high_reasoning: true },
+  };
+  const deepseekConfig = buildCodexConfigTomlTemplate(deepseekForm, deepseekPreset);
+  includes(deepseekConfig, 'model = "deepseek-v4-flash"');
+  includes(deepseekConfig, 'preferred_auth_method = "apikey"');
+  includes(deepseekConfig, 'forced_login_method = "api"');
+  includes(deepseekConfig, 'model_reasoning_effort = "high"');
+  includes(deepseekConfig, 'base_url = "https://api.deepseek.com"');
+  includes(deepseekConfig, 'wire_api = "responses"');
 }
 {
   const deepseekCatalog = JSON.parse(buildCodexModelCatalogPreview({
     ...baseCodexForm,
     display_name: "DeepSeek",
-    base_url: "https://api.deepseek.com/v1",
-    model: "deepseek-v4-pro",
-    model_map: defaultModelMap("deepseek-v4-pro"),
-    provider_model_map: defaultModelMap("deepseek-v4-pro"),
-  }, ["deepseek-v4-flash"]));
+    compat_mode: "direct",
+    base_url: "https://api.deepseek.com",
+    model: "deepseek-v4-flash",
+    model_map: defaultModelMap("deepseek-v4-flash"),
+    provider_model_map: defaultModelMap("deepseek-v4-flash"),
+  }));
+  const [flash] = deepseekCatalog.models as Array<{
+    display_name: string;
+    context_window: number;
+    truncation_policy: { limit: number };
+    default_reasoning_level: string;
+    supported_reasoning_levels: Array<{ effort: string }>;
+    support_verbosity: boolean;
+    web_search_tool_type: string;
+    minimal_client_version: string;
+  }>;
+  equal(flash?.display_name, "deepseek-v4-flash");
+  equal(flash?.context_window, 1_048_576);
+  equal(flash?.truncation_policy.limit, 10_000);
+  equal(flash?.default_reasoning_level, "high");
+  equal(flash?.supported_reasoning_levels.map((level) => level.effort).join(","), "low,high,max");
+  equal(flash?.support_verbosity, true);
+  equal(flash?.web_search_tool_type, "text");
+  equal(flash?.minimal_client_version, "0.144.0");
+}
+{
+  const deepseekCatalog = JSON.parse(buildCodexModelCatalogPreview({
+    ...baseCodexForm,
+    display_name: "DeepSeek",
+    compat_mode: "direct",
+    base_url: "https://api.deepseek.com",
+    model: "deepseek-v4-flash",
+    model_map: defaultModelMap("deepseek-v4-flash"),
+    provider_model_map: defaultModelMap("deepseek-v4-flash"),
+  }, ["deepseek-v4-pro"]));
   const displayNames = (deepseekCatalog.models as Array<{ display_name: string }>).map((model) => model.display_name);
-  equal(displayNames.join(","), "deepseek-v4-pro,deepseek-v4-flash");
+  equal(displayNames.join(","), "deepseek-v4-flash,deepseek-v4-pro");
 }
 {
   const directCatalog = JSON.parse(buildCodexModelCatalogPreview({ ...baseCodexForm, compat_mode: "direct" }));
@@ -555,6 +595,27 @@ const minimaxHermesPreview = buildHermesConfigPreview({
 includes(minimaxHermesPreview, 'base_url: "https://api.minimax.io/anthropic"');
 includes(minimaxHermesPreview, 'api_mode: "anthropic_messages"');
 includes(minimaxHermesPreview, 'model: "MiniMax-M2.7"');
+
+const grokBuildResponsesPreview = buildGrokBuildConfigPreview({
+  ...baseCodexForm,
+  api_format: "openai_responses",
+  models: ["qwen3.6-plus", "qwen3.6-flash"],
+});
+includes(grokBuildResponsesPreview, "[models]");
+includes(grokBuildResponsesPreview, 'default = "switchpp"');
+includes(grokBuildResponsesPreview, "[model.switchpp]");
+includes(grokBuildResponsesPreview, 'api_backend = "responses"');
+includes(grokBuildResponsesPreview, 'api_key = "sk-test"');
+includes(grokBuildResponsesPreview, "[model.switchpp-2]");
+
+const grokBuildAnthropicPreview = buildGrokBuildConfigPreview({
+  ...baseCodexForm,
+  api_format: "anthropic",
+  base_url: "https://api.anthropic.com/v1",
+});
+includes(grokBuildAnthropicPreview, 'api_backend = "messages"');
+includes(grokBuildAnthropicPreview, 'extra_headers = { "x-api-key" = "sk-test", "anthropic-version" = "2023-06-01" }');
+excludes(grokBuildAnthropicPreview, 'api_key = "sk-test"');
 
 const googleHermesPreview = buildHermesConfigPreview({
   ...baseCodexForm,

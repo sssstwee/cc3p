@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.0.15 - 2026-08-03
+
+Switch++ 功能更新。本次新增本地订阅代理与 Grok Build 配置支持，并同步 DeepSeek V4、Codex 和主流厂商的最新接入方式。
+
+### 功能亮点 / Highlights
+
+- 新增本地 CLIProxyAPI 订阅代理管理，可在应用内启动、停止、选择上游模型，并自动同步到 Claude Code、Claude Desktop 与 Grok Build；sidecar 在构建时按目标架构下载并校验，不进入源码仓库。 / Added local CLIProxyAPI subscription proxy management with in-app lifecycle and model selection, automatic Claude Code, Claude Desktop, and Grok Build profile sync, plus architecture-aware verified sidecar preparation during builds.
+- 新增 Grok Build 目标及 `~/.grok/config.toml` 原生写入，支持 xAI、OpenAI-compatible 与 Anthropic-compatible 厂商预设，并保留用户已有配置。 / Added Grok Build as a first-class target with native `~/.grok/config.toml` merging for xAI, OpenAI-compatible, and Anthropic-compatible providers while preserving existing user settings.
+- DeepSeek V4-Flash 改为 Codex 原生 Responses API 直连，写入官方 API 登录方式、1M 上下文模型目录和 high 推理档位；界面同时明确 V4-Pro 当前尚未开放 Responses。 / Switched DeepSeek V4-Flash to native Codex Responses API routing with official API authentication fields, 1M model metadata, and high reasoning defaults, while clearly marking V4-Pro Responses as not yet available.
+- 更新 Claude、Codex、MiniMax、GLM、Kimi、百炼、硅基流动、ModelScope、OpenAI 与 xAI 的模型预设、协议路由和配置预览，并补充目标级回归测试。 / Refreshed model presets, protocol routing, and configuration previews for Claude, Codex, MiniMax, GLM, Kimi, Bailian, SiliconFlow, ModelScope, OpenAI, and xAI, with target-level regression coverage.
+- 本地兼容网关新增订阅代理隔离路由、Anthropic token count 转发和更可靠的 SQLite 调用记录清理；历史记录保留周期统一为 7 天。 / Added isolated subscription routing, Anthropic token-count forwarding, and more reliable SQLite call-history cleanup to the local gateway, with a unified seven-day retention window.
+
+### 界面预览 / Screenshots
+
+**Codex 配置 / Codex Configuration**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.14 - 2026-07-14
 
 Switch++ 小版本更新。本次重点修复上游应用、模型和配置项演进后产生的兼容偏差，让 Claude、Codex 与当前 ChatGPT 桌面端配置保持一致。

@@ -2,10 +2,10 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Switch++",
   "mainBinaryName": "Switch++",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "identifier": "com.sssstwee.switchpp",
   "build": {
-    "beforeDevCommand": "pnpm dev:web",
+    "beforeDevCommand": "pnpm prepare:cliproxyapi && pnpm dev:web",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
@@ -44,9 +44,13 @@
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",
+    "externalBin": [
+      "binaries/cliproxyapi"
+    ],
     "resources": [
       "icons/32x32.png",
-      "icons/tray-template.png"
+      "icons/tray-template.png",
+      "third-party/CLIProxyAPI-LICENSE.txt"
     ],
     "icon": [
       "icons/32x32.png",

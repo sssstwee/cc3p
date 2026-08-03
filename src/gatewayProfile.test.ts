@@ -6,6 +6,7 @@ import {
   isAsciiHeaderValue,
   isModelMapEmpty,
   isOfficialAnthropicBaseUrl,
+  isSubscriptionProxyBaseUrl,
   modelSupports1mContext,
   resolveGatewayFormCompatMode,
   resolveGatewayUpstreamModel,
@@ -108,6 +109,9 @@ const preset: VendorPreset = {
 equal(isOfficialAnthropicBaseUrl(""), true);
 equal(isOfficialAnthropicBaseUrl("https://api.anthropic.com"), true);
 equal(isOfficialAnthropicBaseUrl("https://api.deepseek.com"), false);
+equal(isSubscriptionProxyBaseUrl("http://127.0.0.1:8317/"), true);
+equal(isSubscriptionProxyBaseUrl("http://127.0.0.1:8317/v1"), true);
+equal(isSubscriptionProxyBaseUrl("http://127.0.0.1:23457"), false);
 
 equal(isAsciiHeaderValue("sk-test"), true);
 equal(isAsciiHeaderValue("sk-测试"), false);
@@ -136,6 +140,14 @@ equal(
 equal(gatewayProfileUsesProxy(baseProfile), false);
 equal(gatewayProfileUsesProxy({ ...baseProfile, base_url: "https://api.deepseek.com" }), true);
 equal(gatewayProfileUsesProxy({ ...baseProfile, api_format: "openai_chat" }), true);
+equal(
+  gatewayProfileUsesProxy({
+    ...baseProfile,
+    base_url: "http://127.0.0.1:8317",
+    compat_mode: "proxy",
+  }),
+  true,
+);
 equal(resolveGatewayFormCompatMode({ ...baseProfile, compat_mode: "direct" }, preset), "direct");
 equal(resolveGatewayFormCompatMode({ ...baseProfile, compat_mode: "proxy" }, preset), "proxy");
 equal(resolveGatewayFormCompatMode({ ...baseProfile, compat_mode: undefined }, preset), "proxy");

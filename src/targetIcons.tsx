@@ -8,6 +8,7 @@ export const targetIconByKey: Record<TargetKey, TargetIcon> = {
   codex: SparkIcon,
   claude_cli: TerminalIcon,
   claude_desktop: DesktopIcon,
+  grok_build: TerminalIcon,
   hermes: TerminalIcon,
   opencode: TerminalIcon,
   oh_my_opencode: TerminalIcon,

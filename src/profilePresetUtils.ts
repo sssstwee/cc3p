@@ -22,8 +22,8 @@ export function selectedPresetById(presetId: string | null) {
 
 export function codexCompatModeForPreset(preset: VendorPreset | null): CodexCompatMode {
   if (!preset) return "proxy";
-  if (preset.id === "openai" || preset.id === "openai-package") return "direct";
-  return "proxy";
+  if (preset.codex_compat_mode) return preset.codex_compat_mode;
+  return preset.codex_support_status === "responses" ? "direct" : "proxy";
 }
 
 export function claudeCompatModeForPreset(preset: VendorPreset | null): CodexCompatMode {
@@ -157,7 +157,7 @@ function isPresetVisibleForTarget(preset: VendorPreset, target: TargetKey) {
     return false;
   }
   const targetApiFormat = vendorPresetApiFormatForTarget(preset, target);
-  if (targetApiFormat === "openai_responses") return false;
+  if (targetApiFormat === "openai_responses" && target !== "grok_build") return false;
   if (targetApiFormat === "gemini" && !hasTargetAdapter) return false;
   if (preset.id === "custom") return true;
   return true;

@@ -128,7 +128,7 @@ equal(vendorPresets.includes("id: \"minimax-coding-cn\""), true);
 equal(vendorPresets.includes("auth_field: \"ANTHROPIC_API_KEY\""), true);
 equal(vendorPresets.includes("codex_support_status: \"responses\""), true);
 equal(vendorPresets.includes("codex_support_status: \"gateway\""), true);
-equal(vendorPresets.includes("DeepSeek 官方文档提供 Chat Completions 端点；Codex 通过 Switch++ 本地网关适配后可用。"), true);
+equal(vendorPresets.includes("DeepSeek 官方确认 V4-Flash 原生支持 Responses API 并专门适配 Codex"), true);
 equal(vendorPresets.includes("https://developers.openai.com/codex/config-reference/"), true);
 equal(vendorPresets.includes("https://help.aliyun.com/zh/model-studio/codex"), true);
 equal(vendorPresets.includes("https://openrouter.ai/docs/api/api-reference/responses/create-responses"), true);

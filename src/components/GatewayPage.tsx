@@ -231,7 +231,7 @@ function GatewayDetailContent({
   const gatewayStateDescription = snapshot.running
     ? `${gatewayClientName} 正在请求本地兼容网关。`
     : !snapshot.hasProfile
-      ? "仍可查看最近 30 天内通过本机兼容网关记录的数据。"
+      ? "仍可查看最近 7 天内通过本机兼容网关记录的数据。"
     : snapshot.targetKey === "claude_cli" || isCodexDirectProfile(snapshot.profile)
       ? `${gatewayClientName} 当前不会请求本地兼容网关。`
       : `${gatewayClientName} 当前未通过本地兼容网关转发。`;

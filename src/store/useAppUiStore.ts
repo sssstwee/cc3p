@@ -2,7 +2,16 @@ import { create } from "zustand";
 import type { TargetKey } from "../appTypes.ts";
 import { resolveValue, type StateUpdater } from "./stateUpdater.ts";
 
-export type AppView = "list" | "add" | "env" | "overview" | "switch" | "mcp" | "gateway" | "memory";
+export type AppView =
+  | "list"
+  | "add"
+  | "env"
+  | "overview"
+  | "switch"
+  | "mcp"
+  | "gateway"
+  | "memory"
+  | "subscription_proxy";
 
 type AppUiStore = {
   target: TargetKey;

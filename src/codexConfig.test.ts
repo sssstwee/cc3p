@@ -162,6 +162,25 @@ const gpt5ReasoningSupport = getCodexConfigOptionSupport(
 equal(gpt5ReasoningSupport.statusText, "建议勾选");
 equal(gpt5ReasoningSupport.tone, "ok");
 
+const deepseekReasoningSupport = getCodexConfigOptionSupport(
+  {
+    key: "high_reasoning",
+    label: "高强度推理",
+    description: "",
+    configPath: "model_reasoning_effort",
+  },
+  {
+    model: "deepseek-v4-flash",
+    compatMode: "direct",
+    connectionMode: "gateway",
+    presetId: "deepseek",
+    presetName: "DeepSeek",
+  },
+);
+equal(deepseekReasoningSupport.supported, true);
+equal(deepseekReasoningSupport.statusText, "建议勾选");
+equal(deepseekReasoningSupport.tone, "ok");
+
 const hiddenCodexOptionKeys = [
   "disable_response_storage",
   "disable_history",

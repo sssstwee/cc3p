@@ -80,6 +80,20 @@ const genericDirectThirdPartyClaudeProfile: GatewayProfile = {
   },
 };
 
+const subscriptionProxyClaudeProfile: GatewayProfile = {
+  ...baseGatewayProfile,
+  id: "switchpp-chatgpt-subscription",
+  display_name: "ChatGPT 订阅",
+  base_url: "http://127.0.0.1:8317",
+  compat_mode: "proxy",
+  model_map: {
+    main: "gpt-5.4",
+    haiku: "gpt-5.4",
+    sonnet: "gpt-5.4",
+    opus: "gpt-5.4",
+  },
+};
+
 const chatOnlyClaudeProfile: GatewayProfile = {
   ...baseGatewayProfile,
   id: "profile-4",
@@ -94,10 +108,10 @@ const minimaxClaudeProfile: GatewayProfile = {
   display_name: "MiniMax",
   base_url: "https://api.minimax.io/anthropic",
   model_map: {
-    main: "MiniMax-M2.7",
-    haiku: "MiniMax-M2.7",
-    sonnet: "MiniMax-M2.7",
-    opus: "MiniMax-M2.7",
+    main: "MiniMax-M3",
+    haiku: "MiniMax-M3",
+    sonnet: "MiniMax-M3",
+    opus: "MiniMax-M3",
   },
 };
 
@@ -107,10 +121,10 @@ const kimiCodeClaudeProfile: GatewayProfile = {
   display_name: "Kimi 套餐",
   base_url: "https://api.kimi.com/coding/",
   model_map: {
-    main: "kimi-for-coding",
-    haiku: "kimi-for-coding",
-    sonnet: "kimi-for-coding",
-    opus: "kimi-for-coding",
+    main: "k3",
+    haiku: "k3",
+    sonnet: "k3",
+    opus: "k3",
   },
 };
 
@@ -120,10 +134,10 @@ const siliconFlowClaudeProfile: GatewayProfile = {
   display_name: "硅基流动",
   base_url: "https://api.siliconflow.cn",
   model_map: {
-    main: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-    haiku: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-    sonnet: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-    opus: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+    main: "zai-org/GLM-5.2",
+    haiku: "zai-org/GLM-5.2",
+    sonnet: "zai-org/GLM-5.2",
+    opus: "zai-org/GLM-5.2",
   },
 };
 
@@ -150,7 +164,7 @@ const codexProxyProfile: CodexProfile = {
   compat_mode: "proxy",
   base_url: "https://api.minimaxi.com/v1",
   api_key: "sk-test",
-  model: "MiniMax-M2.7",
+  model: "MiniMax-M3",
   auth_json: "{}",
   config_toml: "",
   codex_config_options: undefined,
@@ -161,8 +175,10 @@ const deepseekCodexProfile: CodexProfile = {
   ...codexProxyProfile,
   id: "codex-deepseek",
   display_name: "DeepSeek",
-  base_url: "https://api.deepseek.com/v1",
-  model: "deepseek-chat",
+  compat_mode: "direct",
+  api_format: "openai_responses",
+  base_url: "https://api.deepseek.com",
+  model: "deepseek-v4-flash",
 };
 
 const officialCodexProfile: CodexProfile = {
@@ -234,6 +250,10 @@ equal(gatewayRequirementForProfile("codex", directThirdPartyCodexResponsesProfil
 equal(gatewayRequirementForProfile("codex", responsesPassthroughCodexProfile).detail.includes("shim"), false);
 equal(gatewayRequirementForProfile("codex", directOpenAiCodexProfile).label, "无需开启");
 notMatch(gatewayRequirementForProfile("codex", deepseekCodexProfile).limitation ?? "", /Anthropic|Messages|search_result/);
+equal(
+  (gatewayRequirementForProfile("codex", deepseekCodexProfile).limitation ?? "").includes("Responses API 当前仅支持 deepseek-v4-flash"),
+  true,
+);
 notMatch(gatewayRequirementForProfile("claude_cli", chatOnlyClaudeProfile).detail, /OpenAI/);
 notMatch(gatewayRequirementForProfile("claude_cli", googleClaudeProfile).limitation ?? "", /OpenAI/);
 notMatch(gatewayRequirementForProfile("claude_cli", modelscopeClaudeProfile).limitation ?? "", /OpenAI/);
@@ -252,6 +272,11 @@ equal(
   gatewayRequirementForProfile("claude_cli", genericDirectThirdPartyClaudeProfile).detail,
   "当前问题：上游已支持 Anthropic Messages，Claude Code 可以直接连接厂商，但不经过本地网关会缺少模型别名、调用记录、请求预检和工具 schema 压缩。开启收益：本地网关保留原生协议能力，同时降低模型跑偏与 Prompt 过长风险。",
 );
+equal(gatewayRequirementForProfile("claude_cli", subscriptionProxyClaudeProfile).label, "必须开启");
+equal(
+  gatewayRequirementForProfile("claude_cli", subscriptionProxyClaudeProfile).detail,
+  "当前配置需要通过 Switch++ 本地兼容网关连接内置 CLIProxyAPI；网关负责应用隔离、模型映射、认证转发和调用记录。",
+);
 equal(
   gatewayRequirementForProfile("claude_cli", baseGatewayProfile).detail,
   "当前问题：最新版 Claude Code 直连该厂商 Anthropic 兼容端点实测失败，需要通过 Switch++ 本地网关完成模型映射、请求清洗、工具 schema 压缩和兼容转发。",
@@ -262,17 +287,17 @@ equal(
 );
 equal(
   gatewayRequirementForProfile("claude_cli", minimaxClaudeProfile).limitation,
-  "仍有限制：MiniMax 官方 Claude Code 文档使用 M2.7，并提示图片理解需要额外配置 Image Understanding MCP；本地网关只处理连接、模型映射和请求预检，不会把 M2.7 文本/代码模型变成视觉模型。",
+  "仍有限制：MiniMax M3 原生支持图片和视频，但能力仍取决于 Claude 请求内容和 MiniMax 兼容端点；本地网关不能绕过格式、大小和计费限制。",
 );
 equal(gatewayRequirementForProfile("claude_cli", minimaxClaudeProfile).label, "必须开启");
 equal(gatewayRequirementForProfile("claude_cli", minimaxClaudeProfile).cornerLabel, "必开");
 equal(
   gatewayRequirementForProfile("claude_cli", kimiCodeClaudeProfile).limitation,
-  "仍有限制：Kimi Code 文档要求第三方 Coding Agent 使用 kimi-for-coding；图片/视频能力未作为该 Claude Code 接入路径的稳定能力声明，本地网关不会补齐上游未开放的多模态能力。",
+  "仍有限制：Kimi Code 路径提供 K3 / K2.7 Code；图片和视频能力仍取决于所选模型、请求格式和套餐权限。",
 );
 equal(
   gatewayRequirementForProfile("claude_cli", siliconFlowClaudeProfile).limitation,
-  "仍有限制：硅基流动文档说明只有 VLM 模型可处理图片；当前预设的 Qwen3-Coder 等代码/文本模型仍按文本模型处理，本地网关不会自动切换到视觉模型。",
+  "仍有限制：硅基流动文档说明只有 VLM 模型可处理图片；当前预设的 GLM-5.2 等文本模型仍按文本模型处理，本地网关不会自动切换到视觉模型。",
 );
 equal(gatewayRequirementForProfile("claude_cli", chatOnlyClaudeProfile).label, "必须开启");
 equal(

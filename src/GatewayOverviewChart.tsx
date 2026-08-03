@@ -74,7 +74,6 @@ function t(key: string, language: AppLanguage) {
     "统计粒度": "Granularity",
     "24 小时": "24 Hours",
     "7 天": "7 Days",
-    "30 天": "30 Days",
     "按小时": "Hourly",
     "按天": "Daily",
     "请求": "Requests",
@@ -153,14 +152,14 @@ export function GatewayOverviewChart({
     <div className="ccr-gateway-overview">
       <div className="ccr-gateway-overview-controls">
         <div className="ccr-gateway-overview-segment" aria-label={t("统计窗口", language)}>
-          {(["24h", "7d", "30d"] as const).map((item) => (
+          {(["24h", "7d"] as const).map((item) => (
             <button
               key={item}
               type="button"
               className={range === item ? "active" : ""}
               onClick={() => onRangeChange(item)}
             >
-              {t(item === "24h" ? "24 小时" : item === "7d" ? "7 天" : "30 天", language)}
+              {t(item === "24h" ? "24 小时" : "7 天", language)}
             </button>
           ))}
         </div>

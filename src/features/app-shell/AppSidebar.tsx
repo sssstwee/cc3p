@@ -1,4 +1,5 @@
 import {
+  ArrowsLeftRight as SubscriptionProxyIcon,
   ArrowCircleUp as UpdateAvailableIcon,
   Brain as MemoryIcon,
   GearSix as SettingsIcon,
@@ -121,6 +122,7 @@ type AppSidebarProps = {
   onGatewayView: () => void;
   onLicenseCodeChange: (value: string) => void;
   onMemoryView: () => void;
+  onSubscriptionProxyView: () => void;
   onLanguageChange: (language: AppLanguage) => void;
   onSettingsBackdropClick: () => void;
   onSettingsToggle: () => void;
@@ -147,6 +149,7 @@ export function AppSidebar({
   onGatewayView,
   onLicenseCodeChange,
   onMemoryView,
+  onSubscriptionProxyView,
   onLanguageChange,
   onSettingsBackdropClick,
   onSettingsToggle,
@@ -225,7 +228,9 @@ export function AppSidebar({
           </div>
           <nav className="ccr-target-nav">
             {visibleTargetOptions.map((option) => {
-              const isActive = option.key === target && !["env", "gateway", "memory", "mcp"].includes(view);
+              const isActive =
+                option.key === target &&
+                !["env", "gateway", "memory", "mcp", "subscription_proxy"].includes(view);
               const isDisabled = option.disabled || licenseMenuLocked;
               return (
                 <button
@@ -271,6 +276,22 @@ export function AppSidebar({
                 <LayersIcon className="h-4 w-4" />
               </span>
               <span className="ccr-target-btn-label">兼容网关</span>
+            </button>
+            <button
+              className={"ccr-target-btn" + (view === "subscription_proxy" ? " active" : "")}
+              disabled={licenseMenuLocked}
+              onClick={() => {
+                if (licenseMenuLocked) return;
+                onSubscriptionProxyView();
+              }}
+              aria-label="订阅代理"
+              title={licenseMenuLocked ? "试用已结束，请先激活。" : "订阅代理"}
+              type="button"
+            >
+              <span className="ccr-target-btn-icon ccr-target-logo-frame ccr-env-nav-icon">
+                <SubscriptionProxyIcon className="h-4 w-4" />
+              </span>
+              <span className="ccr-target-btn-label">订阅代理</span>
             </button>
             <button
               className={"ccr-target-btn" + (view === "env" ? " active" : "")}

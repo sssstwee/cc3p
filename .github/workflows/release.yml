@@ -66,6 +66,8 @@ jobs:
             updaterManifest: macos-aarch64-latest.json
 
     runs-on: ${{ matrix.platform }}
+    env:
+      CLIPROXYAPI_TARGET: aarch64-apple-darwin
 
     steps:
       - uses: actions/checkout@v6.0.2

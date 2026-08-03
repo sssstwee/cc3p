@@ -182,6 +182,7 @@ equal(true, true); // translation logic moved to uiTranslation.ts
 equal(true, true); // translation logic moved to uiTranslation.ts
 equal(appTsx.includes("translateUiText(original"), true);
 equal(appTypes.includes('| "antigravity"'), true);
+equal(appTypes.includes('| "grok_build"'), true);
 equal(appTypes.includes('| "opencode"'), true);
 equal(appTypes.includes('| "oh_my_opencode"'), true);
 equal(appTypes.includes('| "openclaw"'), true);
@@ -190,6 +191,7 @@ equal(appTypes.includes("hermes_desktop"), false);
 equal(appTypes.includes('| "pi"'), true);
 equal(appTypes.includes('| "oh_my_pi"'), true);
 equal(appTypes.includes("antigravity: GatewayProfile[];"), true);
+equal(appTypes.includes("grok_build: GatewayProfile[];"), true);
 equal(appTypes.includes("opencode: GatewayProfile[];"), true);
 equal(appTypes.includes("oh_my_opencode: GatewayProfile[];"), true);
 equal(appTypes.includes("openclaw: GatewayProfile[];"), true);
@@ -197,7 +199,7 @@ equal(appTypes.includes("hermes: GatewayProfile[];"), true);
 equal(appTypes.includes("pi: GatewayProfile[];"), true);
 equal(appTypes.includes("oh_my_pi: GatewayProfile[];"), true);
 equal(appTsx.includes("const clientReferenceOptions: ClientReferenceMeta[] ="), false);
-equal(targetKeyOrder.join(","), "codex,claude_cli,claude_desktop,hermes,opencode,oh_my_opencode,openclaw,pi,oh_my_pi,antigravity");
+equal(targetKeyOrder.join(","), "codex,claude_cli,claude_desktop,grok_build,hermes,opencode,oh_my_opencode,openclaw,pi,oh_my_pi,antigravity");
 equal(targetOptionsContent.includes('export const visibleTargetOptions = targetOptions.filter((option) => option.key !== "antigravity");'), true);
 equal(countMatches(appTsx + appSidebar, /visibleTargetOptions\.map/g), 3);
 equal(appTsx.includes("import { targetOptions, visibleTargetOptions } from \"./targetOptions.ts\";"), true);
@@ -214,6 +216,10 @@ equal(targetOptionsContent.includes('summary: "OpenCode 插件增强配置"'), t
 equal(targetOptionsContent.includes("依赖 OpenCode"), true);
 equal(targetOptionsContent.includes('configFileLabel: "Oh My OpenAgent 路由配置"'), true);
 equal(targetOptionsContent.includes('key: "openclaw"'), true);
+equal(targetOptionsContent.includes('key: "grok_build"'), true);
+equal(targetOptionsContent.includes('summary: "Grok Build 三方模型配置管理"'), true);
+equal(targetOptionsContent.includes('configFilePath: "~/.grok/config.toml"'), true);
+equal(targetOptionsContent.includes('logo: "/target-icons/grok.svg"'), true);
 equal(targetOptionsContent.includes('key: "hermes"'), true);
 equal(targetOptionsContent.includes('key: "hermes_desktop"'), false);
 equal(targetOptionsContent.includes('summary: "Hermes Agent CLI/Desktop 厂商配置管理"'), true);

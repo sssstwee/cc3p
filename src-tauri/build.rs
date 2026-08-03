@@ -6,6 +6,8 @@ fn main() {
     println!("cargo:rerun-if-changed=icons/icon.png");
     println!("cargo:rerun-if-changed=icons/icon.icns");
     println!("cargo:rerun-if-changed=icons/icon.ico");
+    println!("cargo:rerun-if-changed=binaries");
+    println!("cargo:rerun-if-changed=third-party/CLIProxyAPI-LICENSE.txt");
 
     tauri_build::build()
 }

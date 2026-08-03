@@ -3,6 +3,7 @@ import type { CodexConfigOptions } from "./codexConfig.ts";
 export type GatewayTargetKey =
   | "claude_cli"
   | "claude_desktop"
+  | "grok_build"
   | "antigravity"
   | "opencode"
   | "oh_my_opencode"
@@ -133,6 +134,7 @@ export type CodexProfile = {
 export type AppState = {
   claude_cli: GatewayProfile[];
   claude_desktop: GatewayProfile[];
+  grok_build: GatewayProfile[];
   antigravity: GatewayProfile[];
   opencode: GatewayProfile[];
   oh_my_opencode: GatewayProfile[];
@@ -249,6 +251,25 @@ export type CodexProxyStatus = {
   codex?: CodexProxyTargetStatus | null;
   claude_cli?: CodexProxyTargetStatus | null;
   claude_desktop?: CodexProxyTargetStatus | null;
+  subscription_openai?: CodexProxyTargetStatus | null;
+};
+
+export type SubscriptionProxyStatus = {
+  installed: boolean;
+  running: boolean;
+  managed_by_app: boolean;
+  binary_path: string;
+  version: string;
+  base_url: string;
+  client_api_key: string;
+  config_path: string;
+  auth_dir: string;
+  codex_authenticated: boolean;
+  codex_account_count: number;
+  models: string[];
+  gateway_running: boolean;
+  gateway_base_url: string;
+  gateway_api_key: string;
 };
 
 export type CodexProxyTargetStatus = {
@@ -269,7 +290,7 @@ export type CodexProxyCallsPage = {
   calls: CodexProxyCallSummaryRecord[];
 };
 
-export type CodexProxyOverviewRange = "24h" | "7d" | "30d";
+export type CodexProxyOverviewRange = "24h" | "7d";
 export type CodexProxyOverviewBucket = "hour" | "day";
 
 export type CodexProxyOverview = {
