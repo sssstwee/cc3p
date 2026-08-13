@@ -489,6 +489,8 @@ const directThirdPartyDesktopPreview = buildClaudeDesktopProfileConfigPreview({
 includes(directThirdPartyDesktopPreview, '"agentSwitchClient": "Claude Desktop"');
 includes(directThirdPartyDesktopPreview, '"agentSwitchRoute": "direct"');
 includes(directThirdPartyDesktopPreview, '"agentSwitchUpstreamBaseUrl": "https://api.minimaxi.com/anthropic"');
+includes(directThirdPartyDesktopPreview, '"coworkEgressAllowedHosts": [');
+includes(directThirdPartyDesktopPreview, '"*"');
 includes(directThirdPartyDesktopPreview, '"inferenceGatewayBaseUrl": "https://api.minimaxi.com/anthropic"');
 includes(directThirdPartyDesktopPreview, '"agentSwitchUpstreamModel": "MiniMax-M2.7"');
 
@@ -552,6 +554,7 @@ includes(officialPackageDesktopPreview, '"agentSwitchRoute": "official"');
 includes(officialPackageDesktopPreview, '"agentSwitchOfficialAuth": "claude.ai"');
 excludes(officialPackageDesktopPreview, '"disableDeploymentModeChooser"');
 excludes(officialPackageDesktopPreview, '"inferenceModels"');
+excludes(officialPackageDesktopPreview, '"coworkEgressAllowedHosts"');
 if (/inferenceGateway(BaseUrl|ApiKey|AuthField|ApiFormat)/.test(officialPackageDesktopPreview)) {
   throw new Error("Claude Desktop official package preview must stay isolated from gateway/API fields");
 }

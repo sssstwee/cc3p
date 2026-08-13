@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.16 - 2026-08-13
+
+Switch++ 兼容性更新。本次解决 Claude Desktop 使用 DeepSeek V4 时无法处理图片的问题，并补齐三方 Cowork 会话的网络访问配置。
+
+### 功能亮点 / Highlights
+
+- Claude Desktop 的 DeepSeek 本地网关新增可选视觉代理：先由已保存的 Anthropic 或 OpenAI Chat 视觉模型生成图片描述，再将文本交给 DeepSeek，保留 DeepSeek 文本推理链路。 / Added an optional vision proxy for DeepSeek in the Claude Desktop local gateway: a saved Anthropic or OpenAI Chat vision model describes images before the text is sent to DeepSeek, preserving the existing DeepSeek reasoning path.
+- 支持处理消息内图片、图片读取工具结果和历史图片上下文，并同步改写 token 统计请求，避免 DeepSeek 收到不支持的图片内容块。 / Added support for message images, image-reading tool results, and historical image context, while rewriting token-count requests so unsupported image blocks never reach DeepSeek.
+- 三方 Claude Desktop 配置现在写入 `coworkEgressAllowedHosts: ["*"]`，避免 Cowork 会话因缺少网络放行而无法访问所需服务；切回官方 1P 模式时会自动移除。 / Third-party Claude Desktop profiles now write `coworkEgressAllowedHosts: ["*"]` so Cowork sessions can reach required services; the setting is removed automatically when switching back to official 1P mode.
+- 增强 Claude Desktop 配置导入与视觉代理校验，拒绝空 API Key、DeepSeek 自引用和不受支持的协议，并补充前后端回归测试。 / Improved Claude Desktop config import and vision-proxy validation by rejecting empty API keys, DeepSeek self-reference, and unsupported protocols, with frontend and backend regression coverage.
+
+### 界面预览 / Screenshots
+
+**Claude Desktop 配置 / Claude Desktop Configuration**
+
+![Claude Desktop 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.15 - 2026-08-03
 
 Switch++ 功能更新。本次新增本地订阅代理与 Grok Build 配置支持，并同步 DeepSeek V4、Codex 和主流厂商的最新接入方式。

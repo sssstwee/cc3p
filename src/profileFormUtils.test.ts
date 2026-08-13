@@ -50,6 +50,7 @@ equal(officialCodexProfileForLocalSync([gatewayOnly, official])?.id, "official-p
 const emptyAddForm = createEmptyAddForm();
 equal(emptyAddForm.hide_think_blocks, true);
 equal(emptyAddForm.supports_1m_context, true);
+equal(emptyAddForm.vision_profile_id, "");
 equal(openaiPackagePreset.models.includes("gpt-5.6-sol"), true);
 equal(openaiPackagePreset.models.includes("gpt-5.6-terra"), true);
 

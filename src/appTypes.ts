@@ -102,6 +102,7 @@ export type GatewayProfile = {
   use_full_url: boolean;
   compat_mode?: CodexCompatMode;
   upstream_model?: string;
+  vision_profile_id?: string;
   model_map: ModelMap;
   provider_model_map?: ModelMap;
   config_options: GatewayConfigOptions;
@@ -460,6 +461,7 @@ export type AddForm = {
   auth_field: AuthField;
   use_full_url: boolean;
   model: string;
+  vision_profile_id?: string;
   auth_json: string;
   config_toml: string;
   hide_think_blocks: boolean;

@@ -201,7 +201,9 @@ function gatewayCapabilityLimitation(target: TargetKey, profile: CodexProfile | 
 
   if (target === "claude_cli" || target === "claude_desktop") {
     if (kind === "deepseek") {
-      return "仍有限制：DeepSeek 官方 Anthropic 兼容表标注 image、document、search_result 内容块不支持；开启本地网关后可做模型映射、预检和记录，但不能让 DeepSeek 获得图片或文档理解能力。";
+      return target === "claude_desktop"
+        ? "仍有限制：DeepSeek V4 官方 API 是纯文本模型；Claude Desktop 可在本地网关中选择另一个视觉 profile 先生成图片描述，再交给 DeepSeek。未配置视觉代理时，image、document、search_result 内容块仍不受支持。"
+        : "仍有限制：DeepSeek V4 官方 API 是纯文本模型；Claude Code 的 image、document、search_result 内容块仍不受支持，图片需改用视觉模型或视觉 MCP。";
     }
     if (kind === "minimax") {
       return "仍有限制：MiniMax M3 原生支持图片和视频，但能力仍取决于 Claude 请求内容和 MiniMax 兼容端点；本地网关不能绕过格式、大小和计费限制。";

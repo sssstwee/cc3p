@@ -283,7 +283,11 @@ equal(
 );
 equal(
   gatewayRequirementForProfile("claude_cli", baseGatewayProfile).limitation,
-  "仍有限制：DeepSeek 官方 Anthropic 兼容表标注 image、document、search_result 内容块不支持；开启本地网关后可做模型映射、预检和记录，但不能让 DeepSeek 获得图片或文档理解能力。",
+  "仍有限制：DeepSeek V4 官方 API 是纯文本模型；Claude Code 的 image、document、search_result 内容块仍不受支持，图片需改用视觉模型或视觉 MCP。",
+);
+equal(
+  gatewayRequirementForProfile("claude_desktop", baseGatewayProfile).limitation,
+  "仍有限制：DeepSeek V4 官方 API 是纯文本模型；Claude Desktop 可在本地网关中选择另一个视觉 profile 先生成图片描述，再交给 DeepSeek。未配置视觉代理时，image、document、search_result 内容块仍不受支持。",
 );
 equal(
   gatewayRequirementForProfile("claude_cli", minimaxClaudeProfile).limitation,

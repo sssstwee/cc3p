@@ -151,6 +151,7 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
       agentSwitchConfigRole: "profile",
       agentSwitchRoute: "direct",
       agentSwitchUpstreamBaseUrl: form.base_url,
+      coworkEgressAllowedHosts: ["*"],
       disableDeploymentModeChooser: true,
       inferenceProvider: "anthropic",
       inferenceAnthropicApiKey: form.api_key,
@@ -172,6 +173,7 @@ export function buildClaudeDesktopProfileConfigPreview(form: AddForm) {
     agentSwitchConfigRole: "profile",
     agentSwitchRoute: usesLocalGateway ? "local_gateway" : "direct",
     agentSwitchUpstreamBaseUrl: form.base_url,
+    coworkEgressAllowedHosts: ["*"],
     disableDeploymentModeChooser: true,
     inferenceModels: buildGatewayModels(claudeDesktopGatewayModelMap, claudeDesktopGatewayModels).map((model) => ({
       name: model.name,

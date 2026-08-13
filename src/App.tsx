@@ -1682,6 +1682,7 @@ function App() {
       auth_field: isCodexTarget(targetKey) ? "OPENAI_API_KEY" : vendorPresetAuthFieldForTarget(preset, targetKey),
       use_full_url: preset.use_full_url,
       model,
+      vision_profile_id: "",
       auth_json: "",
       config_toml: "",
       hide_think_blocks: true,
@@ -2135,6 +2136,7 @@ function App() {
         use_full_url: formForSubmit.use_full_url,
         compat_mode: submittedCompatMode,
         upstream_model: resolvedGatewayUpstreamModel,
+        vision_profile_id: formForSubmit.vision_profile_id?.trim() || undefined,
         model_map: resolvedDesktopModelMap,
         provider_model_map: resolvedProviderModelMap,
         config_options: resolvedConfigOptions,
@@ -2532,6 +2534,14 @@ function App() {
 
   const isGatewayTarget = !isCodexTarget(target);
   const isDesktopTarget = target === "claude_desktop";
+  const isDeepSeekDesktopProfile = isDesktopTarget && currentSelectedPreset?.id === "deepseek";
+  const deepSeekVisionProfileOptions = isDeepSeekDesktopProfile
+    ? (currentProfiles as GatewayProfile[]).filter((profile) =>
+        profile.id !== editingId
+        && Boolean(profile.api_key.trim())
+        && !profile.base_url.toLowerCase().includes("api.deepseek.com")
+        && (profile.api_format === "anthropic" || profile.api_format === "openai_chat"))
+    : [];
   const isGeneratedClientConfigTarget = isGatewayTarget && !isClaudeGatewayTarget(target);
   const canWriteTargetConfig = supportsNativeApply(target);
   const isOfficialAnthropicDirect = isGatewayTarget && currentSelectedPreset?.id === "anthropic";
@@ -3488,6 +3498,40 @@ function App() {
                   {addForm.compat_mode === "proxy" ? (
                     <div className="ccr-note-box">
                       左侧是 Claude Desktop profile 的模型别名；右侧填写这类请求要转发到的厂商真实模型。
+                    </div>
+                  ) : null}
+                  {isDeepSeekDesktopProfile && addForm.compat_mode === "proxy" ? (
+                    <div className="ccr-edit-field">
+                      <label>视觉代理（图片识别）</label>
+                      <select
+                        className="ccr-select"
+                        value={addForm.vision_profile_id ?? ""}
+                        onChange={(event) => setAddForm({
+                          ...addForm,
+                          vision_profile_id: event.currentTarget.value,
+                        })}
+                      >
+                        <option value="">未配置（图片请求会提示选择视觉模型）</option>
+                        {deepSeekVisionProfileOptions.map((profile) => (
+                          <option key={profile.id} value={profile.id}>
+                            {profile.display_name} · {profile.upstream_model || profile.provider_model_map?.main || profile.model_map.main}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="ccr-field-help">
+                        DeepSeek V4 官方 API 是纯文本模型。按官方集成方案，Switch++ 先用所选 profile 描述图片，再把描述交给 DeepSeek；图片会发送到该视觉模型上游。
+                        <a
+                          className="ccr-helper-link"
+                          href="https://api-docs.deepseek.com/zh-cn/quick_start/agent_integrations/github_copilot"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          官网依据
+                        </a>
+                      </span>
+                      {deepSeekVisionProfileOptions.length === 0 ? (
+                        <span className="ccr-field-help">请先在 Claude Desktop 配置列表中保存一条支持图片输入的 Anthropic 或 OpenAI Chat 视觉模型配置。</span>
+                      ) : null}
                     </div>
                   ) : null}
                   {addForm.compat_mode === "proxy" ? renderModelDiscoveryField("主上游模型") : null}
