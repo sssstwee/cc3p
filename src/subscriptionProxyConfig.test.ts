@@ -45,6 +45,13 @@ const runningStatus: SubscriptionProxyStatus = {
   ],
 };
 
+test("subscription proxy prefers available Astra while preserving an explicit model choice", () => {
+  const models = [...runningStatus.models, "gpt-6-astra"];
+  assert.equal(selectSubscriptionProxyModel(models), "gpt-6-astra");
+  assert.equal(selectSubscriptionProxyModel(models, "gpt-5.6-sol"), "gpt-5.6-sol");
+  assert.equal(selectSubscriptionProxyModel(runningStatus.models, "gpt-6-astra"), "gpt-5.6-sol");
+});
+
 test("Claude Code summary keeps the Anthropic-compatible base URL explicit", () => {
   assert.equal(
     buildClaudeCodeConnectionSummary(clientConfig),

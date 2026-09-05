@@ -254,7 +254,7 @@ function escapeTomlString(value: string) {
 }
 
 function primaryGatewayModel(form: AddForm) {
-  return form.model || form.model_map.main || "gpt-5.6-sol";
+  return form.model || form.model_map.main || "gpt-6-astra";
 }
 
 const CODEX_PROXY_MODEL_SLOT_PRIMARY = "gpt-5.6-sol";

@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.17 - 2026-09-05
+
+Switch++ 现在支持 GPT-6 Astra，并解决官方配置编辑页仍默认选中旧模型、GPT-6 推理选项在保存时被清理的问题。
+
+### 功能亮点 / Highlights
+
+- OpenAI 官方套餐与 API 预设新增 `gpt-6-astra` 并设为默认模型，同时保留 GPT-5.6 等现有候选。 / Added `gpt-6-astra` as the default model in the official OpenAI and API presets while retaining existing GPT-5.6 and other model choices.
+- 新增、编辑或同步 Codex 官方配置时，默认选中最新模型，并同步默认模型输入框与生成的配置；进入表单后仍可手动切换。 / Official Codex profile creation, editing, and local sync now select the latest model by default and keep the model field and generated configuration aligned; manual selection remains available.
+- 修复 GPT-6 原生 Responses 配置的推理强度、推理摘要、输出详略和联网选项被误判为不支持的问题，确保选项正确保存。 / Fixed GPT-6 native Responses profiles incorrectly rejecting reasoning effort, reasoning summaries, verbosity, and web search settings so selected options are preserved.
+- 内置 CLIProxyAPI 升级至 `v7.2.151`，支持 Astra；订阅代理自动选模优先选择可用的 Astra，并保留用户明确指定的模型。 / Updated the bundled CLIProxyAPI to `v7.2.151` with Astra support; automatic subscription model selection prefers an available Astra model while honoring explicit choices.
+
+### 界面预览 / Screenshots
+
+**Codex 配置 / Codex Configuration**
+
+![Codex 配置列表](https://raw.githubusercontent.com/sssstwee/switch-plus-plus/main/docs/assets/screenshots/switchpp-codex-profiles.png)
+
+### macOS 首次启动说明 / macOS First-Launch Notice
+
+Switch++ 尚未通过 Apple 公证（notarization），macOS 首次启动时可能会阻止。安装到 `/Applications` 后请运行：
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Switch++.app"
+open "/Applications/Switch++.app"
+```
+
 ## v1.0.16 - 2026-08-13
 
 Switch++ 兼容性更新。本次解决 Claude Desktop 使用 DeepSeek V4 时无法处理图片的问题，并补齐三方 Cowork 会话的网络访问配置。

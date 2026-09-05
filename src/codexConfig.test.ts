@@ -162,6 +162,21 @@ const gpt5ReasoningSupport = getCodexConfigOptionSupport(
 equal(gpt5ReasoningSupport.statusText, "建议勾选");
 equal(gpt5ReasoningSupport.tone, "ok");
 
+for (const presetId of ["openai", "openai-package"]) {
+  const context = {
+    model: "gpt-6-astra",
+    compatMode: "direct" as const,
+    connectionMode: presetId === "openai" ? "gateway" as const : "official" as const,
+    presetId,
+  };
+  for (const key of ["high_reasoning", "low_verbosity", "enable_web_search", "detailed_reasoning_summary"]) {
+    const option = codexConfigOptionItems.find((item) => item.key === key)!;
+    const support = getCodexConfigOptionSupport(option, context);
+    equal(support.supported, true);
+    if (key === "high_reasoning") equal(support.statusText, "按需勾选");
+  }
+}
+
 const deepseekReasoningSupport = getCodexConfigOptionSupport(
   {
     key: "high_reasoning",

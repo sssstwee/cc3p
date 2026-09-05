@@ -111,6 +111,7 @@ import {
   claudeDesktopGatewayModels,
   claudeDesktopGatewayModelMap,
   customPreset,
+  openaiPackageModels,
   vendorPresetApiFormatForTarget,
   vendorPresetAuthFieldForTarget,
   vendorPresetModelDiscoveryBaseUrlForTarget,
@@ -1781,7 +1782,9 @@ function App() {
     if (!guardLicensedNavigation()) return;
     if (!state || currentTargetMeta.disabled) return;
     const preset = presetForProfile(profile);
-    const nextForm = formFromProfile(profile, preset, target);
+    const nextForm = isCodexTarget(target) && "connection_mode" in profile && profile.connection_mode === "official"
+      ? officialCodexFormFromProfile(profile)
+      : formFromProfile(profile, preset, target);
     const normalizedForm = target === "claude_desktop"
       ? {
           ...nextForm,
@@ -1832,7 +1835,7 @@ function App() {
     if (editingId) return;
 
     if (isCodexCliTarget(target) && preset.id === "openai-package") {
-      const localModel = currentCodexLocalProfile?.model || preset.model_map.main || "";
+      const localModel = preset.models[0] || preset.model_map.main || "";
       const nextForm: AddForm = currentCodexLocalProfile
         ? officialCodexFormFromProfile(currentCodexLocalProfile)
         : {
@@ -1914,7 +1917,7 @@ function App() {
   }
 
   function officialCodexFormFromProfile(profile: CodexProfile): AddForm {
-    const model = profile.model || extractTomlAssignment(profile.config_toml, "model") || "gpt-5.6-sol";
+    const model = openaiPackageModels[0];
     return {
       display_name: profile.display_name,
       website_url: profile.website_url,
@@ -2059,8 +2062,8 @@ function App() {
             codexFormForSubmit.compat_mode === "proxy",
           );
       const resolvedModel = codexFormForSubmit.connection_mode === "official"
-        ? (codexFormForSubmit.model || extractTomlAssignment(resolvedToml, "model") || codexFormForSubmit.model_map.main || "gpt-5.6-sol")
-        : (codexFormForSubmit.model || codexFormForSubmit.model_map.main || "gpt-5.6-sol");
+        ? (codexFormForSubmit.model || extractTomlAssignment(resolvedToml, "model") || codexFormForSubmit.model_map.main || "gpt-6-astra")
+        : (codexFormForSubmit.model || codexFormForSubmit.model_map.main || "gpt-6-astra");
       const profileId = isEditMode
         ? editingProfile!.id
         : crypto.randomUUID();
@@ -2698,7 +2701,7 @@ function App() {
         modelDiscoveryBusy={modelDiscoveryBusy}
         modelDiscoveryEndpoint={modelDiscoveryEndpoint}
         providerModelCandidates={providerModelCandidates}
-        placeholder={currentSelectedPreset?.model_map.main || currentSelectedPreset?.models[0] || "gpt-5.6-sol"}
+        placeholder={currentSelectedPreset?.model_map.main || currentSelectedPreset?.models[0] || "gpt-6-astra"}
         onDiscover={() => void handleDiscoverProviderModels()}
         onChange={(nextModel) => setAddForm((form) => formWithSelectedProviderModel(form, nextModel))}
         onSelectCandidate={(model) => setAddForm((form) => formWithSelectedProviderModel(form, model))}
@@ -2715,7 +2718,7 @@ function App() {
 
   function renderOfficialCodexModelField() {
     if (!isOfficialCodexDirect) return null;
-    const value = addForm.model || addForm.model_map.main || "gpt-5.6-sol";
+    const value = addForm.model || addForm.model_map.main || "gpt-6-astra";
     const handleModelChange = (nextModel: string) => {
       setAddForm((form) => ({
         ...form,
@@ -2728,7 +2731,7 @@ function App() {
     return (
       <OfficialCodexModelField
         value={value}
-        placeholder={currentSelectedPreset?.model_map.main || "gpt-5.6-sol"}
+        placeholder={currentSelectedPreset?.model_map.main || "gpt-6-astra"}
         providerModelCandidates={providerModelCandidates}
         onChange={handleModelChange}
         onSelectCandidate={handleModelChange}
@@ -4948,7 +4951,7 @@ function App() {
                               <div className="ccr-edit-field">
                                 <label>{codexProfile.connection_mode === "official" ? "默认模型" : "上游模型"}</label>
                                 <Input
-                                  placeholder="gpt-5.6-sol"
+                                  placeholder="gpt-6-astra"
                                   value={codexProfile.model}
                                   onChange={(e) =>
                                     updateCodexProfile(profile.id, {

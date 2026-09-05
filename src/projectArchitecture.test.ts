@@ -49,8 +49,8 @@ test("subscription proxy is exposed as a local-only CLIProxyAPI tool", privateCo
   assert.deepEqual(tauriConfig.bundle.externalBin, ["binaries/cliproxyapi"]);
   assert.equal(tauriConfig.bundle.resources.includes("third-party/CLIProxyAPI-LICENSE.txt"), true);
   assert.equal(packageJson.scripts["prepare:cliproxyapi"], "node scripts/prepare-cliproxyapi-sidecar.mjs");
-  assert.equal(prepareSidecar.includes('const VERSION = "7.2.102"'), true);
-  assert.equal(prepareSidecar.includes("f0bc5990a9f519bb211e87a6bf16d82096ab84735c40ed94ac42eafc38fe373d"), true);
+  assert.equal(prepareSidecar.includes('const VERSION = "7.2.151"'), true);
+  assert.equal(prepareSidecar.includes("9115b9691ceff071735ec1365c2885dca5d4084105de09877f5afdb675f1f815"), true);
   assert.equal(prepareSidecar.includes("router-for-me/CLIProxyAPI/releases/download"), true);
   assert.equal(releaseWorkflow.includes("CLIPROXYAPI_TARGET: aarch64-apple-darwin"), true);
   assert.equal(proxyView.includes("安装 CLIProxyAPI"), false);

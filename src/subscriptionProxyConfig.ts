@@ -104,7 +104,7 @@ export function selectSubscriptionProxyModel(
   const newest = (candidates: string[]) =>
     candidates.sort((left, right) =>
       right.localeCompare(left, "en", { numeric: true }));
-  for (const pattern of [/-sol$/i, /-terra$/i, /-luna$/i]) {
+  for (const pattern of [/-astra$/i, /-sol$/i, /-terra$/i, /-luna$/i]) {
     const model = newest(usableModels.filter((item) => pattern.test(item)))[0];
     if (model) return model;
   }

@@ -13,14 +13,14 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const VERSION = "7.2.102";
+const VERSION = "7.2.151";
 const TARGET = process.env.CLIPROXYAPI_TARGET
   ?? (process.platform === "darwin" && process.arch === "arm64"
     ? "aarch64-apple-darwin"
     : "");
 const ARCHIVE_NAME = `CLIProxyAPI_${VERSION}_darwin_aarch64.tar.gz`;
-const ARCHIVE_SHA256 = "f0bc5990a9f519bb211e87a6bf16d82096ab84735c40ed94ac42eafc38fe373d";
-const BINARY_SHA256 = "3155450347058cba691d533170b2791cdc2fbdec4b8a0c32962a05e6b101a601";
+const ARCHIVE_SHA256 = "9115b9691ceff071735ec1365c2885dca5d4084105de09877f5afdb675f1f815";
+const BINARY_SHA256 = "b5165a29322b91fdb0def254bb688933660110de2d647f3ceab4119ce59caf58";
 const DOWNLOAD_URL =
   `https://github.com/router-for-me/CLIProxyAPI/releases/download/v${VERSION}/${ARCHIVE_NAME}`;
 const DESTINATION = resolve(

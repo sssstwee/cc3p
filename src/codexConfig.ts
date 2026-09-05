@@ -95,7 +95,7 @@ const allCodexConfigOptionItems: CodexConfigOptionItem[] = [
   {
     key: "low_verbosity",
     label: "精简输出",
-    description: '写入 model_verbosity = "low"，降低 GPT-5 系列模型的输出冗长度。',
+    description: '写入 model_verbosity = "low"，降低支持该能力的 GPT 模型的输出冗长度。',
     configPath: "model_verbosity",
   },
   {
@@ -453,8 +453,9 @@ export function getCodexConfigOptionSupport(
     presetName?: string | null;
   },
 ): CodexConfigOptionSupport {
-  const isGpt5 = /(^|[/:-])gpt-5/i.test(context.model);
-  const prefersModelDefaultReasoning = /(^|[/:-])gpt-5\.6-(sol|terra|luna)$/i.test(context.model);
+  const isGpt6Astra = /(^|[/:-])gpt-6-astra$/i.test(context.model);
+  const isGptReasoningModel = isGpt6Astra || /(^|[/:-])gpt-5/i.test(context.model);
+  const prefersModelDefaultReasoning = isGpt6Astra || /(^|[/:-])gpt-5\.6-(sol|terra|luna)$/i.test(context.model);
   const usesNativeResponses = context.connectionMode === "official" || context.compatMode === "direct";
   const presetName = context.presetName || "当前厂商";
   const confirmedOpenAiResponses = context.connectionMode === "official" || context.presetId === "openai" || context.presetId === "openai-package";
@@ -487,13 +488,13 @@ export function getCodexConfigOptionSupport(
     };
   }
 
-  if (option.key === "low_verbosity" && (!isGpt5 || !confirmedOpenAiResponses)) {
+  if (option.key === "low_verbosity" && (!isGptReasoningModel || !confirmedOpenAiResponses)) {
     return {
       supported: false,
       statusText: "不建议勾选",
       tone: "muted",
       recommendation: `不建议勾选：${presetName} 当前配置未确认支持 model_verbosity。`,
-      detail: `当前模型为 ${context.model || "未填写"}；Codex 配置参考将 model_verbosity 用于 GPT-5 Responses API 输出详略控制。`,
+      detail: `当前模型为 ${context.model || "未填写"}；model_verbosity 用于支持该能力的 GPT 模型的 Responses API 输出详略控制。`,
       source: {
         label: "Codex 配置参考：model_verbosity",
         url: codexConfigReferenceUrl,
@@ -602,13 +603,13 @@ export function getCodexConfigOptionSupport(
   }
 
   if (option.key === "high_reasoning") {
-    if (usesNativeResponses && isGpt5 && confirmedOpenAiResponses) {
+    if (usesNativeResponses && isGptReasoningModel && confirmedOpenAiResponses) {
       if (prefersModelDefaultReasoning) {
         return {
           supported: true,
           statusText: "按需勾选",
           tone: "warn",
-          recommendation: "按需勾选：GPT-5.6 Codex 模型已有各自默认推理强度，常规任务建议先沿用模型默认值。",
+          recommendation: "按需勾选：当前 GPT 模型已有默认推理强度，常规任务建议先沿用模型默认值。",
           detail: "不勾选时不写 model_reasoning_effort；遇到复杂任务时再显式切到 high，可避免新配置长期强制高推理开销。",
           source: {
             label: "Codex 官方模型目录",
@@ -620,7 +621,7 @@ export function getCodexConfigOptionSupport(
         supported: true,
         statusText: "建议勾选",
         tone: "ok",
-        recommendation: `建议勾选：${presetName} 当前是 GPT-5 原生 Responses 路径，支持 reasoning effort。`,
+        recommendation: `建议勾选：${presetName} 当前 GPT 模型使用原生 Responses 路径，支持 reasoning effort。`,
         detail: "该项会写入 model_reasoning_effort = \"high\"，由 Codex 在后续新会话启动时读取。",
         source: {
           label: "Codex 配置参考：model_reasoning_effort",
@@ -633,7 +634,7 @@ export function getCodexConfigOptionSupport(
       statusText: "不建议勾选",
       tone: "muted",
       recommendation: `不建议勾选：${presetName} 当前预设未确认支持 Codex reasoning effort 字段。`,
-      detail: `当前模型为 ${context.model || "未填写"}，连接模式为 ${context.compatMode}；只有已确认的 GPT-5 原生 Responses 路径才默认开放该项。`,
+      detail: `当前模型为 ${context.model || "未填写"}，连接模式为 ${context.compatMode}；只有已确认支持推理强度的原生 Responses 路径才默认开放该项。`,
       source: {
         label: "Codex 配置参考：model_reasoning_effort",
         url: codexConfigReferenceUrl,

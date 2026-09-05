@@ -30,7 +30,7 @@ const currentDefaultModels: Record<string, string> = {
   siliconflow: "zai-org/GLM-5.2",
   bailian: "qwen3.7-max",
   modelscope: "ZhipuAI/GLM-5.2",
-  openai: "gpt-5.6-sol",
+  openai: "gpt-6-astra",
   xai: "grok-4.5",
   anthropic: "claude-fable-5",
   google: "gemini-3.6-flash",
@@ -470,10 +470,10 @@ equal(anthropicApi.model_map.sonnet, "claude-sonnet-5");
 equal(anthropicApi.model_map.haiku, "claude-haiku-4-5-20251001");
 
 const openaiPackage = requiredPreset("openai-package");
-equal(openaiPackage.model_map.main, "gpt-5.6-sol");
+equal(openaiPackage.model_map.main, "gpt-6-astra");
 equal(
   openaiPackage.models.join(","),
-  "gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,gpt-5.5,gpt-5.4,gpt-5.4-mini,gpt-5.3-codex-spark",
+  "gpt-6-astra,gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,gpt-5.5,gpt-5.4,gpt-5.4-mini,gpt-5.3-codex-spark",
 );
 
 function codexProfileForPresetForTest(preset: VendorPreset): CodexProfile {
